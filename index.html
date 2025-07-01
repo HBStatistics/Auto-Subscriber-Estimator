@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscriber Estimator</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 15% 15%, #6366f1 0%, #1e3a8a 70%);
+      min-height: 100vh;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 1rem;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    }
+    textarea::-webkit-scrollbar {
+      width: 8px;
+    }
+    textarea::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.35);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="p-5 sm:p-10">
+  <header class="text-center mb-10">
+    <h1 class="text-4xl sm:text-5xl font-bold drop-shadow">📈 Subscriber Auto‑Estimator</h1>
+    <p class="text-lg sm:text-xl mt-2 text-white/80 max-w-xl mx-auto">Paste your known data points &amp; instantly fill in every day between them.</p>
+  </header>
+
+  <main class="max-w-5xl w-full mx-auto space-y-10">
+    <!-- INPUT -->
+    <section class="glass p-6 sm:p-8">
+      <h2 class="text-2xl font-semibold mb-4">1. Add your data</h2>
+      <p class="opacity-90 mb-3">Format: <span class="font-mono">YYYY‑MM‑DD,subscriber_count</span>. Abbreviations (<span class="font-mono">1.4M, 10k</span>) &amp; commas are OK.</p>
+      <pre class="bg-white/10 p-3 rounded text-sm whitespace-pre-wrap mb-4 select-all">2025-01-01,1.2M
+2025-01-10,1,350,000</pre>
+      <textarea id="dataInput" rows="8" placeholder="YYYY-MM-DD,123456" class="w-full p-4 bg-white/10 focus:bg-white/20 rounded font-mono resize-y"></textarea>
+      <button id="estimateBtn" class="mt-4 w-full sm:w-auto px-6 py-3 rounded-lg bg-emerald-400/90 hover:bg-emerald-300 text-black font-semibold transition-all">Estimate ➜</button>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="resultsSection" class="hidden glass p-6 sm:p-8 space-y-6">
+      <h2 class="text-2xl font-semibold">2. Results</h2>
+      <div class="overflow-x-auto">
+        <table id="resultTable" class="min-w-full text-left text-sm sm:text-base"></table>
+      </div>
+      <canvas id="resultChart" class="w-full max-h-[400px]"></canvas>
+      <div class="flex flex-wrap gap-3">
+        <button id="downloadBtn" class="px-5 py-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-black font-semibold transition-all">Download CSV</button>
+        <button id="copyGainsVertBtn" class="px-5 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-black font-semibold transition-all">Copy Gains (Vertical)</button>
+        <button id="copyGainsHorizBtn" class="px-5 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-black font-semibold transition-all">Copy Gains (Horizontal)</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mt-auto pt-10 text-center text-white/70 text-sm">HB Statistics © 2025</footer>
+
+  <script>
+    // ---------- Helper functions ----------
+
+    function parseCount(raw) {
+      if (!raw) return NaN;
+      const m = raw.trim().toLowerCase().match(/^([\d,.]+)([kmb]?)$/);
+      if (!m) return NaN;
+      const num = parseFloat(m[1].replace(/,/g, ''));
+      const mult = { k: 1e3, m: 1e6, b: 1e9 }[m[2]] || 1;
+      return Math.round(num * mult);
+    }
+
+    function parseInput(raw) {
+      return raw.split(/[\n\r]+/)
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(line => {
+          const idx = line.indexOf(',');
+          if (idx === -1) throw new Error(`Missing comma in: ${line}`);
+          const date = new Date(line.slice(0, idx).trim());
+          const count = parseCount(line.slice(idx + 1));
+          if (isNaN(date) || isNaN(count)) throw new Error(`Invalid entry: ${line}`);
+          return { date, count };
+        })
+        .sort((a, b) => a.date - b.date);
+    }
+
+    function generateEstimates(points) {
+      const msPerDay = 86_400_000;
+      const out = [];
+      for (let i = 0; i < points.length - 1; i++) {
+        const start = points[i];
+        const end = points[i + 1];
+        let days = Math.round((end.date - start.date) / msPerDay);
+        if (days < 1) days = 1;
+        const totalDelta = end.count - start.count;
+        const multipliers = Array.from({ length: days }, () => 0.8 + Math.random() * 0.4);
+        const sumMult = multipliers.reduce((s, m) => s + m, 0);
+        const gains = multipliers.map(m => Math.round(m * totalDelta / sumMult));
+        const drift = totalDelta - gains.reduce((s, g) => s + g, 0);
+        gains[gains.length - 1] += drift;
+
+        if (out.length === 0) out.push({ date: start.date, count: start.count });
+        let running = start.count;
+        for (let d = 0; d < gains.length; d++) {
+          running += gains[d];
+          out.push({ date: new Date(start.date.getTime() + (d + 1) * msPerDay), count: running });
+        }
+      }
+      return out;
+    }
+
+    // ---------- Rendering ----------
+
+    let chartInstance;
+    let dailyGainsArr = [];
+
+    function renderTable(data) {
+      const tbl = document.getElementById('resultTable');
+      tbl.innerHTML = `<thead><tr class="border-b border-white/25 uppercase text-xs tracking-wider"><th class="py-2 pr-4">Date</th><th class="py-2 pr-4">Subscribers</th><th class="py-2">Daily Gain</th></tr></thead><tbody></tbody>`;
+      const tbody = tbl.querySelector('tbody');
+      dailyGainsArr = [];
+      data.forEach((row, idx) => {
+        const gain = idx === 0 ? 0 : row.count - data[idx - 1].count;
+        if (idx !== 0) dailyGainsArr.push(gain);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="py-1 pr-4 font-mono">${row.date.toISOString().split('T')[0]}</td>`+
+                       `<td class="py-1 pr-4 font-semibold">${row.count.toLocaleString()}</td>`+
+                       `<td class="py-1 font-semibold text-emerald-400">+${gain.toLocaleString()}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderChart(data) {
+      const ctx = document.getElementById('resultChart').getContext('2d');
+      const labels = data.map(r => r.date.toISOString().split('T')[0]);
+      const counts = data.map(r => r.count);
+      chartInstance?.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Estimated Subscribers', data: counts, tension: 0.25, fill: false, pointRadius: 0 }] },
+        options: {
+          plugins: { legend: { labels: { color: '#fff' } } },
+          scales: {
+            x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.12)' } },
+            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.12)' } },
+          }
+        }
+      });
+    }
+
+    // ---------- Utilities ----------
+
+    function downloadCSV(data) {
+      const rows = ['Date,Estimated Subscribers', ...data.map(r => `${r.date.toISOString().split('T')[0]},${r.count}`)];
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = Object.assign(document.createElement('a'), { href: url, download: 'subscriber_estimates.csv' });
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyGains(orientation = 'vertical') {
+      if (!dailyGainsArr.length) return alert('Nothing to copy yet!');
+      const sep = orientation === 'vertical' ? '\n' : '\t';
+      const text = dailyGainsArr.map(g => `+${g.toLocaleString()}`).join(sep);
+      navigator.clipboard.writeText(text).then(() => alert(`Daily gains copied (${orientation})!`));
+    }
+
+    // ---------- Main logic ----------
+
+    document.getElementById('estimateBtn').addEventListener('click', () => {
+      const raw = document.getElementById('dataInput').value.trim();
+      if (!raw) {
+        alert('Please paste at least two data points.');
+        return;
+      }
+      let points;
+      try {
+        points = parseInput(raw);
+      } catch (e) {
+        alert(e.message);
+        return;
+      }
+      if (points.length < 2) {
+        alert('Need at least two valid data points.');
+        return;
+      }
+      const estimates = generateEstimates(points);
+      renderTable(estimates);
+      renderChart(estimates);
+      document.getElementById('resultsSection').classList.remove('hidden');
+      document.getElementById('downloadBtn').onclick = () => downloadCSV(estimates);
+      document.getElementById('copyGainsVertBtn').onclick = () => copyGains('vertical');
+      document.getElementById('copyGainsHorizBtn').onclick = () => copyGains('horizontal');
+    });
+  </script>
+</body>
+</html>
