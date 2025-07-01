@@ -2,210 +2,292 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Subscriber Estimator</title>
-
-  <!-- Tailwind CDN -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HB Statistics • Subscriber Growth Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: system-ui, sans-serif;
       background: radial-gradient(circle at 15% 15%, #6366f1 0%, #1e3a8a 70%);
-      min-height: 100vh;
       color: #fff;
-      display: flex;
-      flex-direction: column;
+      min-height: 100vh;
     }
     .glass {
       background: rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 1rem;
+      padding: 2rem;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-    }
-    textarea::-webkit-scrollbar {
-      width: 8px;
-    }
-    textarea::-webkit-scrollbar-thumb {
-      background-color: rgba(255, 255, 255, 0.35);
-      border-radius: 4px;
     }
   </style>
 </head>
-<body class="p-5 sm:p-10">
+<body class="p-6">
   <header class="text-center mb-10">
-    <h1 class="text-4xl sm:text-5xl font-bold drop-shadow">📈 Subscriber Auto‑Estimator</h1>
-    <p class="text-lg sm:text-xl mt-2 text-white/80 max-w-xl mx-auto">Paste your known data points &amp; instantly fill in every day between them.</p>
+    <h1 class="text-4xl font-bold drop-shadow">📊 HB Statistics Subscriber Growth Tracker</h1>
+    <p class="text-lg mt-2 text-white/80 max-w-2xl mx-auto">
+      Paste your milestones &nbsp;→&nbsp; get linear‑smooth daily estimates, plateau fixer, and twin charts (subs & gains).
+    </p>
   </header>
 
-  <main class="max-w-5xl w-full mx-auto space-y-10">
-    <!-- INPUT -->
-    <section class="glass p-6 sm:p-8">
-      <h2 class="text-2xl font-semibold mb-4">1. Add your data</h2>
-      <p class="opacity-90 mb-3">Format: <span class="font-mono">YYYY‑MM‑DD,subscriber_count</span>. Abbreviations (<span class="font-mono">1.4M, 10k</span>) &amp; commas are OK.</p>
-      <pre class="bg-white/10 p-3 rounded text-sm whitespace-pre-wrap mb-4 select-all">2025-01-01,1.2M
-2025-01-10,1,350,000</pre>
-      <textarea id="dataInput" rows="8" placeholder="YYYY-MM-DD,123456" class="w-full p-4 bg-white/10 focus:bg-white/20 rounded font-mono resize-y"></textarea>
-      <button id="estimateBtn" class="mt-4 w-full sm:w-auto px-6 py-3 rounded-lg bg-emerald-400/90 hover:bg-emerald-300 text-black font-semibold transition-all">Estimate ➜</button>
+  <main class="max-w-5xl mx-auto space-y-10">
+    <section class="glass">
+      <h2 class="text-2xl font-semibold mb-3">1. Paste your data</h2>
+      <label for="dataInput" class="block mb-2 text-white/80 font-medium select-none">
+        Format: <code>YYYY‑MM‑DD,subscribers</code> – commas / K / M / B accepted.
+      </label>
+      <textarea
+        id="dataInput"
+        rows="6"
+        class="w-full p-4 rounded-xl bg-gradient-to-br from-white/90 to-white/70 text-black font-mono text-lg
+               shadow-md border-2 border-transparent
+               focus:outline-none focus:ring-4 focus:ring-indigo-400 focus:border-indigo-600
+               transition-all duration-300 resize-y"
+        placeholder="2025-01-01,1.2M&#10;2025-01-10,1350000"
+      ></textarea>
+      <button
+        id="estimateBtn"
+        class="mt-4 px-6 py-2 bg-emerald-400 text-black font-semibold rounded hover:bg-emerald-300 transition-colors duration-300"
+      >
+        Estimate ➜
+      </button>
     </section>
 
-    <!-- RESULTS -->
-    <section id="resultsSection" class="hidden glass p-6 sm:p-8 space-y-6">
-      <h2 class="text-2xl font-semibold">2. Results</h2>
+    <section id="resultsSection" class="hidden glass space-y-6">
+      <h2 class="text-2xl font-semibold">2. Estimates</h2>
       <div class="overflow-x-auto">
-        <table id="resultTable" class="min-w-full text-left text-sm sm:text-base"></table>
+        <table id="resultTable" class="min-w-full text-sm text-left"></table>
       </div>
-      <canvas id="resultChart" class="w-full max-h-[400px]"></canvas>
-      <div class="flex flex-wrap gap-3">
-        <button id="downloadBtn" class="px-5 py-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-black font-semibold transition-all">Download CSV</button>
-        <button id="copyGainsVertBtn" class="px-5 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-black font-semibold transition-all">Copy Gains (Vertical)</button>
-        <button id="copyGainsHorizBtn" class="px-5 py-2 rounded-lg bg-sky-300 hover:bg-sky-200 text-black font-semibold transition-all">Copy Gains (Horizontal)</button>
+      <div class="space-y-8">
+        <canvas id="subsChart" class="w-full h-72"></canvas>
+        <canvas id="gainChart" class="w-full h-60"></canvas>
+      </div>
+      <div class="flex flex-wrap gap-4">
+        <button
+          id="downloadBtn"
+          class="px-5 py-2 bg-amber-300 text-black font-semibold rounded hover:bg-amber-200"
+        >
+          Download CSV
+        </button>
+        <button
+          id="copyGainsVertBtn"
+          class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200"
+        >
+          Copy Gains (Vertical)
+        </button>
+        <button
+          id="copyGainsHorizBtn"
+          class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200"
+        >
+          Copy Gains (Horizontal)
+        </button>
       </div>
     </section>
   </main>
 
-  <footer class="mt-auto pt-10 text-center text-white/70 text-sm">HB Statistics © 2025</footer>
-
   <script>
-    // ---------- Helper functions ----------
-
+    // ------------ Helpers ------------
     function parseCount(raw) {
-      if (!raw) return NaN;
       const m = raw.trim().toLowerCase().match(/^([\d,.]+)([kmb]?)$/);
       if (!m) return NaN;
-      const num = parseFloat(m[1].replace(/,/g, ''));
+      const n = parseFloat(m[1].replace(/,/g, ""));
       const mult = { k: 1e3, m: 1e6, b: 1e9 }[m[2]] || 1;
-      return Math.round(num * mult);
+      return Math.round(n * mult);
     }
 
     function parseInput(raw) {
-      return raw.split(/[\n\r]+/)
-        .map(l => l.trim())
+      return raw
+        .split(/[\n\r]+/)
+        .map((l) => l.trim())
         .filter(Boolean)
-        .map(line => {
-          const idx = line.indexOf(',');
-          if (idx === -1) throw new Error(`Missing comma in: ${line}`);
-          const date = new Date(line.slice(0, idx).trim());
-          const count = parseCount(line.slice(idx + 1));
-          if (isNaN(date) || isNaN(count)) throw new Error(`Invalid entry: ${line}`);
-          return { date, count };
+        .map((l) => {
+          const firstComma = l.indexOf(",");
+          if (firstComma === -1) throw new Error("Missing comma in: " + l);
+          const dateStr = l.slice(0, firstComma).trim();
+          const countStr = l.slice(firstComma + 1).trim();
+          const d = new Date(dateStr);
+          const c = parseCount(countStr);
+          if (isNaN(d) || isNaN(c)) throw new Error("Bad entry: " + l);
+          return { date: d, count: c };
         })
         .sort((a, b) => a.date - b.date);
     }
 
-    function generateEstimates(points) {
-      const msPerDay = 86_400_000;
-      const out = [];
+    // Linear interpolation with small random noise (~±3%)
+    function interpolate(points) {
+      const day = 86400000,
+        out = [];
       for (let i = 0; i < points.length - 1; i++) {
-        const start = points[i];
-        const end = points[i + 1];
-        let days = Math.round((end.date - start.date) / msPerDay);
-        if (days < 1) days = 1;
-        const totalDelta = end.count - start.count;
-        const multipliers = Array.from({ length: days }, () => 0.8 + Math.random() * 0.4);
-        const sumMult = multipliers.reduce((s, m) => s + m, 0);
-        const gains = multipliers.map(m => Math.round(m * totalDelta / sumMult));
-        const drift = totalDelta - gains.reduce((s, g) => s + g, 0);
-        gains[gains.length - 1] += drift;
+        const s = points[i],
+          e = points[i + 1];
+        let days = Math.max(1, Math.round((e.date - s.date) / day));
+        const total = e.count - s.count;
 
-        if (out.length === 0) out.push({ date: start.date, count: start.count });
-        let running = start.count;
+        // Base daily gain evenly distributed
+        const baseGain = total / days;
+
+        // Generate daily gains with small random noise ±3%
+        let gains = Array(days)
+          .fill()
+          .map(() => {
+            const variance = 1 + (Math.random() * 0.06 - 0.03); // 0.97 to 1.03
+            return baseGain * variance;
+          });
+
+        // Normalize so sum matches total exactly (rounding fix)
+        const sumGains = gains.reduce((a, b) => a + b, 0);
+        const correctionFactor = total / sumGains;
+        gains = gains.map((g) => g * correctionFactor);
+
+        // Round and adjust last day to fix rounding errors
+        gains = gains.map((g) => Math.round(g));
+        const roundingDiff = total - gains.reduce((a, b) => a + b, 0);
+        gains[gains.length - 1] += roundingDiff;
+
+        if (!out.length) out.push({ date: new Date(s.date), count: s.count });
+        let c = s.count;
         for (let d = 0; d < gains.length; d++) {
-          running += gains[d];
-          out.push({ date: new Date(start.date.getTime() + (d + 1) * msPerDay), count: running });
+          c += gains[d];
+          out.push({ date: new Date(s.date.getTime() + (d + 1) * day), count: c });
         }
       }
       return out;
     }
 
-    // ---------- Rendering ----------
+    // Plateau smoothing for exact repeated gains of 100K or multiples with ±10% spread
+    function smoothPlateaus(data) {
+      const out = data.map((r) => ({ date: new Date(r.date), count: r.count }));
+      for (let i = 1; i < out.length; ) {
+        const gain = out[i].count - out[i - 1].count;
+        // Check if gain is multiple of 100K (e.g., 100000, 200000, 300000...)
+        if (gain !== 0 && gain % 100000 === 0) {
+          let start = i - 1,
+            end = i;
+          while (
+            end + 1 < out.length &&
+            out[end + 1].count - out[end].count === gain
+          )
+            end++;
+          const len = end - start;
+          if (len >= 2) {
+            const total = gain * len;
+            // Generate smooth distribution with ±10% random variance around 1
+            const baseGain = total / len;
+            let mults = Array(len)
+              .fill()
+              .map(() => 0.9 + Math.random() * 0.2); // 0.9 to 1.1 approx
+            const sum = mults.reduce((a, b) => a + b, 0);
+            let newGains = mults.map((m) => (m / sum) * total);
+            // Round gains
+            newGains = newGains.map((g) => Math.round(g));
+            // Fix rounding diff on last
+            const diff = total - newGains.reduce((a, b) => a + b, 0);
+            newGains[newGains.length - 1] += diff;
+            let c = out[start].count;
+            for (let d = 0; d < len; d++) {
+              c += newGains[d];
+              out[start + 1 + d].count = c;
+            }
+          }
+          i = end + 1;
+        } else i++;
+      }
+      return out;
+    }
 
-    let chartInstance;
-    let dailyGainsArr = [];
+    // ------------ Rendering ------------
+    let subsChart,
+      gainChart,
+      gainsArr = [];
 
     function renderTable(data) {
-      const tbl = document.getElementById('resultTable');
-      tbl.innerHTML = `<thead><tr class="border-b border-white/25 uppercase text-xs tracking-wider"><th class="py-2 pr-4">Date</th><th class="py-2 pr-4">Subscribers</th><th class="py-2">Daily Gain</th></tr></thead><tbody></tbody>`;
-      const tbody = tbl.querySelector('tbody');
-      dailyGainsArr = [];
-      data.forEach((row, idx) => {
-        const gain = idx === 0 ? 0 : row.count - data[idx - 1].count;
-        if (idx !== 0) dailyGainsArr.push(gain);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="py-1 pr-4 font-mono">${row.date.toISOString().split('T')[0]}</td>`+
-                       `<td class="py-1 pr-4 font-semibold">${row.count.toLocaleString()}</td>`+
-                       `<td class="py-1 font-semibold text-emerald-400">+${gain.toLocaleString()}</td>`;
-        tbody.appendChild(tr);
+      const tbl = document.getElementById("resultTable");
+      tbl.innerHTML =
+        '<thead><tr class="border-b border-white/25 text-xs uppercase"><th class="pr-4 py-2">Date</th><th class="pr-4 py-2">Subscribers</th><th class="py-2">Daily Gain</th></tr></thead><tbody></tbody>';
+      const tb = tbl.querySelector("tbody");
+      gainsArr = [];
+      data.forEach((r, i) => {
+        const g = i ? r.count - data[i - 1].count : 0;
+        if (i) gainsArr.push(g);
+        const row = document.createElement("tr");
+        row.innerHTML = `<td class="py-1 pr-4 font-mono">${r.date
+          .toISOString()
+          .split("T")[0]}</td><td class="py-1 pr-4">${r.count.toLocaleString()}</td><td class="py-1 text-emerald-300 font-semibold">+${g.toLocaleString()}</td>`;
+        tb.appendChild(row);
       });
     }
 
-    function renderChart(data) {
-      const ctx = document.getElementById('resultChart').getContext('2d');
-      const labels = data.map(r => r.date.toISOString().split('T')[0]);
-      const counts = data.map(r => r.count);
-      chartInstance?.destroy();
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label: 'Estimated Subscribers', data: counts, tension: 0.25, fill: false, pointRadius: 0 }] },
+    function buildChart(ctx, labels, data, label, color) {
+      return new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{ label, data, tension: 0.25, pointRadius: 0, borderColor: color }],
+        },
         options: {
-          plugins: { legend: { labels: { color: '#fff' } } },
+          plugins: { legend: { labels: { color: "#fff" } } },
           scales: {
-            x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.12)' } },
-            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.12)' } },
-          }
-        }
+            x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.12)" } },
+            y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.12)" } },
+          },
+        },
       });
     }
 
-    // ---------- Utilities ----------
+    function renderCharts(data) {
+      const labels = data.map((r) => r.date.toISOString().split("T")[0]);
+      const counts = data.map((r) => r.count);
+      subsChart?.destroy();
+      gainChart?.destroy();
+      subsChart = buildChart(
+        document.getElementById("subsChart").getContext("2d"),
+        labels,
+        counts,
+        "Subscribers",
+        "#4ade80"
+      );
+      gainChart = buildChart(
+        document.getElementById("gainChart").getContext("2d"),
+        labels.slice(1),
+        gainsArr,
+        "Daily Gain",
+        "#38bdf8"
+      );
+    }
 
     function downloadCSV(data) {
-      const rows = ['Date,Estimated Subscribers', ...data.map(r => `${r.date.toISOString().split('T')[0]},${r.count}`)];
-      const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const csv =
+        "Date,Subscribers\n" +
+        data.map((r) => `${r.date.toISOString().split("T")[0]},${r.count}`).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const link = Object.assign(document.createElement('a'), { href: url, download: 'subscriber_estimates.csv' });
-      link.click();
+      Object.assign(document.createElement("a"), { href: url, download: "subscriber_estimates.csv" }).click();
       URL.revokeObjectURL(url);
     }
 
-    function copyGains(orientation = 'vertical') {
-      if (!dailyGainsArr.length) return alert('Nothing to copy yet!');
-      const sep = orientation === 'vertical' ? '\n' : '\t';
-      const text = dailyGainsArr.map(g => `+${g.toLocaleString()}`).join(sep);
-      navigator.clipboard.writeText(text).then(() => alert(`Daily gains copied (${orientation})!`));
+    function copyGains(format) {
+      const txt = gainsArr.map((g) => `+${g.toLocaleString()}`).join(format === "vertical" ? "\n" : "\t");
+      navigator.clipboard.writeText(txt);
     }
 
-    // ---------- Main logic ----------
-
-    document.getElementById('estimateBtn').addEventListener('click', () => {
-      const raw = document.getElementById('dataInput').value.trim();
-      if (!raw) {
-        alert('Please paste at least two data points.');
-        return;
-      }
-      let points;
+    document.getElementById("estimateBtn").addEventListener("click", () => {
+      const raw = document.getElementById("dataInput").value.trim();
+      if (!raw) return alert("Please paste at least two data points.");
+      let pts;
       try {
-        points = parseInput(raw);
+        pts = parseInput(raw);
       } catch (e) {
-        alert(e.message);
-        return;
+        return alert(e.message);
       }
-      if (points.length < 2) {
-        alert('Need at least two valid data points.');
-        return;
-      }
-      const estimates = generateEstimates(points);
-      renderTable(estimates);
-      renderChart(estimates);
-      document.getElementById('resultsSection').classList.remove('hidden');
-      document.getElementById('downloadBtn').onclick = () => downloadCSV(estimates);
-      document.getElementById('copyGainsVertBtn').onclick = () => copyGains('vertical');
-      document.getElementById('copyGainsHorizBtn').onclick = () => copyGains('horizontal');
+      if (pts.length < 2) return alert("Need at least two valid data points.");
+      const interp = interpolate(pts);
+      const final = smoothPlateaus(interp);
+      renderTable(final);
+      renderCharts(final);
+      document.getElementById("resultsSection").classList.remove("hidden");
+      document.getElementById("downloadBtn").onclick = () => downloadCSV(final);
+      document.getElementById("copyGainsVertBtn").onclick = () => copyGains("vertical");
+      document.getElementById("copyGainsHorizBtn").onclick = () => copyGains("horizontal");
     });
   </script>
 </body>
