@@ -20,13 +20,35 @@
       padding: 2rem;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
     }
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.75);
+      color: #4ade80;
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 9999;
+    }
+    #toast.show {
+      opacity: 1;
+    }
+    textarea::placeholder {
+      font-style: italic;
+    }
   </style>
 </head>
 <body class="p-6">
   <header class="text-center mb-10">
     <h1 class="text-4xl font-bold drop-shadow">📊 HB Statistics Subscriber Growth Tracker</h1>
     <p class="text-lg mt-2 text-white/80 max-w-2xl mx-auto">
-      Paste your milestones &nbsp;→&nbsp; get linear‑smooth daily estimates, plateau fixer, and twin charts (subs & gains).
+      Paste your milestones → get realistic daily estimates, plateau fixer, and twin charts (subs & gains).
     </p>
   </header>
 
@@ -39,15 +61,14 @@
       <textarea
         id="dataInput"
         rows="6"
-        class="w-full p-4 rounded-xl bg-gradient-to-br from-white/90 to-white/70 text-black font-mono text-lg
-               shadow-md border-2 border-transparent
-               focus:outline-none focus:ring-4 focus:ring-indigo-400 focus:border-indigo-600
-               transition-all duration-300 resize-y"
-        placeholder="2025-01-01,1.2M&#10;2025-01-10,1350000"
+        class="w-full p-4 rounded-xl bg-gradient-to-br from-white/90 to-white/70 text-black font-mono text-lg shadow-md border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-indigo-400 focus:border-indigo-600 transition-all resize-y"
+        placeholder="2025-01-01,1.2M
+2025-01-10,1350000
+2025-01-20,1.4M"
       ></textarea>
       <button
         id="estimateBtn"
-        class="mt-4 px-6 py-2 bg-emerald-400 text-black font-semibold rounded hover:bg-emerald-300 transition-colors duration-300"
+        class="mt-4 px-6 py-2 bg-emerald-400 text-black font-semibold rounded hover:bg-emerald-300 transition-colors"
       >
         Estimate ➜
       </button>
@@ -63,231 +84,283 @@
         <canvas id="gainChart" class="w-full h-60"></canvas>
       </div>
       <div class="flex flex-wrap gap-4">
-        <button
-          id="downloadBtn"
-          class="px-5 py-2 bg-amber-300 text-black font-semibold rounded hover:bg-amber-200"
-        >
+        <button id="downloadBtn" class="px-5 py-2 bg-amber-300 text-black font-semibold rounded hover:bg-amber-200">
           Download CSV
         </button>
-        <button
-          id="copyGainsVertBtn"
-          class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200"
-        >
+        <button id="copyGainsVertBtn" class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200">
           Copy Gains (Vertical)
         </button>
-        <button
-          id="copyGainsHorizBtn"
-          class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200"
-        >
+        <button id="copyGainsHorizBtn" class="px-5 py-2 bg-sky-300 text-black font-semibold rounded hover:bg-sky-200">
           Copy Gains (Horizontal)
         </button>
       </div>
     </section>
   </main>
 
+  <div id="toast">Copied!</div>
+
   <script>
-    // ------------ Helpers ------------
-    function parseCount(raw) {
-      const m = raw.trim().toLowerCase().match(/^([\d,.]+)([kmb]?)$/);
-      if (!m) return NaN;
-      const n = parseFloat(m[1].replace(/,/g, ""));
-      const mult = { k: 1e3, m: 1e6, b: 1e9 }[m[2]] || 1;
-      return Math.round(n * mult);
-    }
+    // Parse subscriber count string with commas and K/M/B suffix
+    const parseCount = (raw) => {
+      // Remove commas first, lowercase
+      const cleaned = raw.replace(/,/g, '').trim().toLowerCase();
+      // Match number and optional suffix
+      const match = cleaned.match(/^([\d.]+)([kmb]?)$/);
+      if (!match) return NaN;
+      const num = parseFloat(match[1]);
+      if (isNaN(num)) return NaN;
+      const multipliers = { k: 1e3, m: 1e6, b: 1e9 };
+      return Math.round(num * (multipliers[match[2]] || 1));
+    };
 
-    function parseInput(raw) {
-      return raw
-        .split(/[\n\r]+/)
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .map((l) => {
-          const firstComma = l.indexOf(",");
-          if (firstComma === -1) throw new Error("Missing comma in: " + l);
-          const dateStr = l.slice(0, firstComma).trim();
-          const countStr = l.slice(firstComma + 1).trim();
-          const d = new Date(dateStr);
-          const c = parseCount(countStr);
-          if (isNaN(d) || isNaN(c)) throw new Error("Bad entry: " + l);
-          return { date: d, count: c };
-        })
-        .sort((a, b) => a.date - b.date);
-    }
+    // Parse input textarea data into [{date, count}]
+    const parseInput = (raw) => {
+      const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+      const result = [];
+      for (let line of lines) {
+        // Normalize dashes to standard hyphen-minus
+        line = line.replace(/[–—]/g, '-');
+        const firstComma = line.indexOf(',');
+        if (firstComma === -1) throw new Error(`Bad entry: "${line}" (missing comma)`);
+        const dateStr = line.slice(0, firstComma).trim();
+        const countStr = line.slice(firstComma + 1).trim();
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) throw new Error(`Bad date in line: "${line}"`);
+        const count = parseCount(countStr);
+        if (isNaN(count)) throw new Error(`Bad subscriber count in line: "${line}"`);
+        result.push({ date, count });
+      }
+      // Sort by date ascending
+      result.sort((a, b) => a.date - b.date);
+      return result;
+    };
 
-    // Linear interpolation with small random noise (~±3%)
+    // Interpolate daily counts with variation
     function interpolate(points) {
-      const day = 86400000,
-        out = [];
+      const dayMs = 86400000;
+      const output = [];
+
       for (let i = 0; i < points.length - 1; i++) {
-        const s = points[i],
-          e = points[i + 1];
-        let days = Math.max(1, Math.round((e.date - s.date) / day));
-        const total = e.count - s.count;
+        const start = points[i];
+        const end = points[i + 1];
+        const daysBetween = Math.max(1, Math.round((end.date - start.date) / dayMs));
+        const totalGain = end.count - start.count;
+        const avgGain = totalGain / daysBetween;
+        const variation = 0.15; // 15% daily variation
 
-        // Base daily gain evenly distributed
-        const baseGain = total / days;
+        // Generate varied daily gains that sum to totalGain
+        let dailyGains = Array.from({ length: daysBetween }, () =>
+          avgGain * (1 + (Math.random() * 2 * variation - variation))
+        );
 
-        // Generate daily gains with small random noise ±3%
-        let gains = Array(days)
-          .fill()
-          .map(() => {
-            const variance = 1 + (Math.random() * 0.06 - 0.03); // 0.97 to 1.03
-            return baseGain * variance;
-          });
+        // Normalize to sum exactly totalGain
+        const sumGains = dailyGains.reduce((a, b) => a + b, 0);
+        dailyGains = dailyGains.map((g) => Math.round((g * totalGain) / sumGains));
 
-        // Normalize so sum matches total exactly (rounding fix)
-        const sumGains = gains.reduce((a, b) => a + b, 0);
-        const correctionFactor = total / sumGains;
-        gains = gains.map((g) => g * correctionFactor);
+        // Fix rounding error on last day
+        const fix = totalGain - dailyGains.reduce((a, b) => a + b, 0);
+        dailyGains[dailyGains.length - 1] += fix;
 
-        // Round and adjust last day to fix rounding errors
-        gains = gains.map((g) => Math.round(g));
-        const roundingDiff = total - gains.reduce((a, b) => a + b, 0);
-        gains[gains.length - 1] += roundingDiff;
+        // Push starting point if first segment
+        if (i === 0) {
+          output.push({ date: new Date(start.date), count: start.count });
+        }
 
-        if (!out.length) out.push({ date: new Date(s.date), count: s.count });
-        let c = s.count;
-        for (let d = 0; d < gains.length; d++) {
-          c += gains[d];
-          out.push({ date: new Date(s.date.getTime() + (d + 1) * day), count: c });
+        // Push interpolated days
+        let currentCount = start.count;
+        for (let d = 0; d < daysBetween; d++) {
+          currentCount += dailyGains[d];
+          output.push({ date: new Date(start.date.getTime() + (d + 1) * dayMs), count: currentCount });
+        }
+      }
+
+      return output;
+    }
+
+    // Smooth plateaus for repeated big gains (e.g. 100k for several days)
+    function smoothPlateaus(data) {
+      const out = data.map((r) => ({ date: new Date(r.date), count: r.count }));
+      for (let i = 1; i < out.length; ) {
+        const gain = out[i].count - out[i - 1].count;
+        if (gain !== 0 && gain % 100000 === 0) {
+          let start = i - 1,
+            end = i;
+          while (end + 1 < out.length && out[end + 1].count - out[end].count === gain) end++;
+          const length = end - start;
+          if (length >= 2) {
+            const total = gain * length;
+            let multipliers = Array.from({ length }, () => 0.9 + Math.random() * 0.2);
+            const sumMult = multipliers.reduce((a, b) => a + b, 0);
+            let gains = multipliers.map((m) => Math.round((m * total) / sumMult));
+            // Fix rounding error
+            const fix = total - gains.reduce((a, b) => a + b, 0);
+            gains[gains.length - 1] += fix;
+
+            let c = out[start].count;
+            for (let d = 0; d < length; d++) {
+              c += gains[d];
+              out[start + 1 + d].count = c;
+            }
+          }
+          i = end + 1;
+        } else {
+          i++;
         }
       }
       return out;
     }
 
-    // Plateau smoothing for exact repeated gains of 100K or multiples with ±10% spread
-    function smoothPlateaus(data) {
-      const out = data.map((r) => ({ date: new Date(r.date), count: r.count }));
-      for (let i = 1; i < out.length; ) {
-        const gain = out[i].count - out[i - 1].count;
-        // Check if gain is multiple of 100K (e.g., 100000, 200000, 300000...)
-        if (gain !== 0 && gain % 100000 === 0) {
-          let start = i - 1,
-            end = i;
-          while (
-            end + 1 < out.length &&
-            out[end + 1].count - out[end].count === gain
-          )
-            end++;
-          const len = end - start;
-          if (len >= 2) {
-            const total = gain * len;
-            // Generate smooth distribution with ±10% random variance around 1
-            const baseGain = total / len;
-            let mults = Array(len)
-              .fill()
-              .map(() => 0.9 + Math.random() * 0.2); // 0.9 to 1.1 approx
-            const sum = mults.reduce((a, b) => a + b, 0);
-            let newGains = mults.map((m) => (m / sum) * total);
-            // Round gains
-            newGains = newGains.map((g) => Math.round(g));
-            // Fix rounding diff on last
-            const diff = total - newGains.reduce((a, b) => a + b, 0);
-            newGains[newGains.length - 1] += diff;
-            let c = out[start].count;
-            for (let d = 0; d < len; d++) {
-              c += newGains[d];
-              out[start + 1 + d].count = c;
-            }
-          }
-          i = end + 1;
-        } else i++;
-      }
-      return out;
-    }
+    let subsChart = null;
+    let gainChart = null;
+    let gainsArr = [];
+    let est = [];
 
-    // ------------ Rendering ------------
-    let subsChart,
-      gainChart,
-      gainsArr = [];
-
+    // Render estimates table
     function renderTable(data) {
-      const tbl = document.getElementById("resultTable");
+      const tbl = document.getElementById('resultTable');
       tbl.innerHTML =
         '<thead><tr class="border-b border-white/25 text-xs uppercase"><th class="pr-4 py-2">Date</th><th class="pr-4 py-2">Subscribers</th><th class="py-2">Daily Gain</th></tr></thead><tbody></tbody>';
-      const tb = tbl.querySelector("tbody");
+      const tbody = tbl.querySelector('tbody');
       gainsArr = [];
       data.forEach((r, i) => {
-        const g = i ? r.count - data[i - 1].count : 0;
-        if (i) gainsArr.push(g);
-        const row = document.createElement("tr");
-        row.innerHTML = `<td class="py-1 pr-4 font-mono">${r.date
-          .toISOString()
-          .split("T")[0]}</td><td class="py-1 pr-4">${r.count.toLocaleString()}</td><td class="py-1 text-emerald-300 font-semibold">+${g.toLocaleString()}</td>`;
-        tb.appendChild(row);
+        const gain = i ? r.count - data[i - 1].count : 0;
+        if (i) gainsArr.push(gain);
+        const sign = gain > 0 ? '+' : gain < 0 ? '-' : '';
+        const cls = gain > 0 ? 'text-emerald-300' : gain < 0 ? 'text-red-400' : 'text-white/60';
+        tbody.insertAdjacentHTML(
+          'beforeend',
+          `<tr>
+            <td class="py-1 pr-4 font-mono">${r.date.toISOString().split('T')[0]}</td>
+            <td class="py-1 pr-4">${r.count.toLocaleString()}</td>
+            <td class="py-1 ${cls} font-semibold">${sign}${Math.abs(gain).toLocaleString()}</td>
+          </tr>`
+        );
       });
     }
 
+    // Create Chart.js line chart
     function buildChart(ctx, labels, data, label, color) {
       return new Chart(ctx, {
-        type: "line",
+        type: 'line',
         data: {
           labels,
           datasets: [{ label, data, tension: 0.25, pointRadius: 0, borderColor: color }],
         },
         options: {
-          plugins: { legend: { labels: { color: "#fff" } } },
+          plugins: { legend: { labels: { color: '#fff' } } },
           scales: {
-            x: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.12)" } },
-            y: { ticks: { color: "#fff" }, grid: { color: "rgba(255,255,255,0.12)" } },
+            x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,.12)' } },
+            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,.12)' } },
           },
         },
       });
     }
 
+    // Render subscriber and gain charts
     function renderCharts(data) {
-      const labels = data.map((r) => r.date.toISOString().split("T")[0]);
+      const labels = data.map((r) => r.date.toISOString().split('T')[0]);
       const counts = data.map((r) => r.count);
       subsChart?.destroy();
       gainChart?.destroy();
       subsChart = buildChart(
-        document.getElementById("subsChart").getContext("2d"),
+        document.getElementById('subsChart').getContext('2d'),
         labels,
         counts,
-        "Subscribers",
-        "#4ade80"
+        'Subscribers',
+        '#4ade80'
       );
       gainChart = buildChart(
-        document.getElementById("gainChart").getContext("2d"),
+        document.getElementById('gainChart').getContext('2d'),
         labels.slice(1),
         gainsArr,
-        "Daily Gain",
-        "#38bdf8"
+        'Daily Gain',
+        '#38bdf8'
       );
     }
 
+    // Toast feedback on copy
+    function showToast() {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      clearTimeout(window.toastTimeout);
+      window.toastTimeout = setTimeout(() => t.classList.remove('show'), 1500);
+    }
+
+    // Copy text helper
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(showToast);
+    }
+
+    // Prepare CSV download
     function downloadCSV(data) {
-      const csv =
-        "Date,Subscribers\n" +
-        data.map((r) => `${r.date.toISOString().split("T")[0]},${r.count}`).join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
+      const header = ['Date', 'Subscribers', 'Daily Gain'];
+      const rows = data.map((r, i) => {
+        const gain = i ? r.count - data[i - 1].count : 0;
+        return [
+          r.date.toISOString().split('T')[0],
+          r.count,
+          gain,
+        ];
+      });
+      const csvContent =
+        [header, ...rows]
+          .map((r) => r.map(String).join(','))
+          .join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      Object.assign(document.createElement("a"), { href: url, download: "subscriber_estimates.csv" }).click();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'subscriber-estimates.csv';
+      a.click();
       URL.revokeObjectURL(url);
     }
 
-    function copyGains(format) {
-      const txt = gainsArr.map((g) => `+${g.toLocaleString()}`).join(format === "vertical" ? "\n" : "\t");
-      navigator.clipboard.writeText(txt);
-    }
-
-    document.getElementById("estimateBtn").addEventListener("click", () => {
-      const raw = document.getElementById("dataInput").value.trim();
-      if (!raw) return alert("Please paste at least two data points.");
-      let pts;
-      try {
-        pts = parseInput(raw);
-      } catch (e) {
-        return alert(e.message);
+    // On Estimate button click
+    document.getElementById('estimateBtn').addEventListener('click', () => {
+      const input = document.getElementById('dataInput').value;
+      if (!input.trim()) {
+        alert('Please enter your data first.');
+        return;
       }
-      if (pts.length < 2) return alert("Need at least two valid data points.");
-      const interp = interpolate(pts);
-      const final = smoothPlateaus(interp);
-      renderTable(final);
-      renderCharts(final);
-      document.getElementById("resultsSection").classList.remove("hidden");
-      document.getElementById("downloadBtn").onclick = () => downloadCSV(final);
-      document.getElementById("copyGainsVertBtn").onclick = () => copyGains("vertical");
-      document.getElementById("copyGainsHorizBtn").onclick = () => copyGains("horizontal");
+      let points;
+      try {
+        points = parseInput(input);
+        if (points.length < 2) {
+          alert('Please enter at least two data points.');
+          return;
+        }
+      } catch (e) {
+        alert(e.message);
+        return;
+      }
+
+      let estimated = interpolate(points);
+      estimated = smoothPlateaus(estimated);
+      est = estimated;
+
+      renderTable(estimated);
+      renderCharts(estimated);
+      document.getElementById('resultsSection').classList.remove('hidden');
+    });
+
+    // Copy gains vertical
+    document.getElementById('copyGainsVertBtn').addEventListener('click', () => {
+      if (!est.length) return;
+      const gainsText = gainsArr.map((g) => (g < 0 ? '-' : '+') + Math.abs(g).toLocaleString()).join('\n');
+      copyText(gainsText);
+    });
+
+    // Copy gains horizontal
+    document.getElementById('copyGainsHorizBtn').addEventListener('click', () => {
+      if (!est.length) return;
+      const gainsText = gainsArr.map((g) => (g < 0 ? '-' : '+') + Math.abs(g).toLocaleString()).join('\t');
+      copyText(gainsText);
+    });
+
+    // Download CSV
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (!est.length) return;
+      downloadCSV(est);
     });
   </script>
 </body>
