@@ -13,6 +13,7 @@
       transition: background 0.6s ease, color 0.6s ease;
     }
 
+    /* Default Dark Mode */
     body.dark {
       background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
       background-size: 200% 200%;
@@ -30,6 +31,7 @@
       100% { background-position: 0% 50%; }
     }
 
+    /* Floating background shapes */
     .shape {
       position: absolute;
       border-radius: 50%;
@@ -50,8 +52,13 @@
       border-radius: 1.25rem;
       padding: 2rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       position: relative;
       z-index: 1;
+    }
+    body.light .glass {
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     }
 
     #toast {
@@ -72,6 +79,7 @@
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
+    /* Fancy header underline */
     .underline-glow {
       position: relative;
       display: inline-block;
@@ -98,50 +106,72 @@
     table thead { background: rgba(255, 255, 255, 0.1); }
     table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.05); }
     table tbody tr:hover { background: rgba(255, 255, 255, 0.15); }
+    body.light table thead { background: rgba(0, 0, 0, 0.05); }
+    body.light table tbody tr:nth-child(even) { background: rgba(0, 0, 0, 0.03); }
+    body.light table tbody tr:hover { background: rgba(0, 0, 0, 0.07); }
 
     .fancy-btn {
+      position: relative;
+      overflow: hidden;
       transition: transform 0.25s ease, box-shadow 0.3s ease;
     }
     .fancy-btn:hover {
       transform: translateY(-2px) scale(1.03);
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
+
+    .animate-section {
+      animation: fadeUp 0.8s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0px); }
+    }
   </style>
 </head>
 <body class="dark p-6 relative">
+  <!-- Background shapes container -->
   <div class="absolute inset-0 overflow-hidden -z-10">
     <div class="shape shape1"></div>
     <div class="shape shape2"></div>
   </div>
 
+  <!-- Mode Toggle -->
   <div class="flex justify-end mb-4 relative z-10">
     <button id="modeToggle" class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
       🌙 Dark Mode
     </button>
   </div>
 
-  <header class="text-center mb-12 relative z-10">
+  <!-- Header -->
+  <header class="text-center mb-12 relative z-10 animate-section">
     <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
-    <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
+    <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto dark:text-white/80 light:text-gray-700">
       Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic daily estimates</span> with smoothing + charts.
     </p>
   </header>
 
+  <!-- Main -->
   <main class="max-w-5xl mx-auto space-y-12 relative z-10">
-    <section class="glass">
+    <!-- Input Section -->
+    <section class="glass animate-section">
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
-      <textarea id="dataInput" rows="6"
-        class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md"
+      <textarea
+        id="dataInput"
+        rows="6"
+        class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
         placeholder="2025-01-01,1.2M
 2025-01-10,1350000
-2025-01-20,1.4M"></textarea>
-      <button id="estimateBtn"
-        class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+2025-01-20,1.4M"
+      ></textarea>
+      <button id="estimateBtn" class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
         🚀 Estimate Growth
       </button>
     </section>
 
-    <section id="resultsSection" class="hidden glass space-y-8">
+    <!-- Results Section -->
+    <section id="resultsSection" class="hidden glass space-y-8 animate-section">
       <h2 class="text-2xl font-semibold">2. Estimates</h2>
       <div class="overflow-x-auto">
         <table id="resultTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
@@ -168,9 +198,9 @@
 
   <script>
     const dayMs = 86400000;
-    let currentMode = "dark";
-    const toggleBtn = document.getElementById("modeToggle");
+    let currentMode = "dark"; // default
 
+    const toggleBtn = document.getElementById("modeToggle");
     toggleBtn.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
@@ -179,16 +209,16 @@
       renderCharts(est);
     });
 
-    function parseCount(raw) {
+    // --- Parse ---
+    const parseCount = (raw) => {
       const cleaned = raw.replace(/,/g, '').trim().toLowerCase();
       const match = cleaned.match(/^([\d.]+)([kmb]?)$/);
       if (!match) return NaN;
       const num = parseFloat(match[1]);
       const multipliers = { k: 1e3, m: 1e6, b: 1e9 };
       return Math.round(num * (multipliers[match[2]] || 1));
-    }
-
-    function parseInput(raw) {
+    };
+    const parseInput = (raw) => {
       return raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
         line = line.replace(/[–—]/g, '-');
         const [dateStr, countStr] = line.split(',');
@@ -198,23 +228,28 @@
         if (isNaN(count)) throw new Error(`Bad count: "${line}"`);
         return { ts, count };
       }).sort((a, b) => a.ts - b.ts);
-    }
+    };
 
+    // --- Interpolation ---
     function interpolate(points) {
       const output = [];
       for (let i = 0; i < points.length - 1; i++) {
-        const start = points[i], end = points[i + 1];
+        const start = points[i];
+        const end = points[i + 1];
         const daysBetween = Math.max(1, Math.round((end.ts - start.ts) / dayMs));
         const totalGain = end.count - start.count;
         const avgGain = totalGain / daysBetween;
         const variation = 0.15;
 
-        let dailyGains = Array.from({ length: daysBetween }, () =>
-          avgGain * (1 + (Math.random() * 2 * variation - variation))
-        );
+        let dailyGains = Array.from({ length: daysBetween }, () => {
+          let factor = 1 + (Math.random() * 2 * variation - variation);
+          if (factor > 1.25) factor = 1.25;
+          if (factor < 0.75) factor = 0.75;
+          return avgGain * factor;
+        });
 
         const sumGains = dailyGains.reduce((a, b) => a + b, 0);
-        dailyGains = dailyGains.map(g => Math.round((g * totalGain) / sumGains));
+        dailyGains = dailyGains.map((g) => Math.round((g * totalGain) / sumGains));
         const fix = totalGain - dailyGains.reduce((a, b) => a + b, 0);
         dailyGains[dailyGains.length - 1] += fix;
 
@@ -228,6 +263,7 @@
       return output;
     }
 
+    // --- Plateau smoothing ---
     function smoothPlateaus(data) {
       const out = data.map(r => ({ ts: r.ts, count: r.count }));
       for (let i = 1; i < out.length;) {
@@ -240,7 +276,7 @@
             const total = gain * length;
             let multipliers = Array.from({ length }, () => 0.9 + Math.random() * 0.2);
             const sumMult = multipliers.reduce((a, b) => a + b, 0);
-            let gains = multipliers.map(m => Math.round((m * total) / sumMult));
+            let gains = multipliers.map((m) => Math.round((m * total) / sumMult));
             const fix = total - gains.reduce((a, b) => a + b, 0);
             gains[gains.length - 1] += fix;
             let c = out[start].count;
