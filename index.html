@@ -13,7 +13,6 @@
       transition: background 0.6s ease, color 0.6s ease;
     }
 
-    /* Default Dark Mode */
     body.dark {
       background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
       background-size: 200% 200%;
@@ -24,14 +23,12 @@
       background: linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9);
       color: #111;
     }
-
     @keyframes gradientShift {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    /* Floating background shapes */
     .shape {
       position: absolute;
       border-radius: 50%;
@@ -52,7 +49,6 @@
       border-radius: 1.25rem;
       padding: 2rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
       position: relative;
       z-index: 1;
     }
@@ -79,7 +75,6 @@
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-    /* Fancy header underline */
     .underline-glow {
       position: relative;
       display: inline-block;
@@ -99,16 +94,115 @@
       100% { opacity: 0.6; }
     }
 
+    /* ————— ENHANCED TABLE STYLING ————— */
     table {
-      border-radius: 0.75rem;
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      border-radius: 1rem;
       overflow: hidden;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s ease;
     }
-    table thead { background: rgba(255, 255, 255, 0.1); }
-    table tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.05); }
-    table tbody tr:hover { background: rgba(255, 255, 255, 0.15); }
-    body.light table thead { background: rgba(0, 0, 0, 0.05); }
-    body.light table tbody tr:nth-child(even) { background: rgba(0, 0, 0, 0.03); }
-    body.light table tbody tr:hover { background: rgba(0, 0, 0, 0.07); }
+
+    table::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 1rem;
+      padding: 2px;
+      background: linear-gradient(90deg, #22d3ee, #4ade80, #818cf8);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      -webkit-mask-composite: destination-out;
+      z-index: -1;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(16px);
+      color: #e0f2fe;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    thead th {
+      padding: 1rem;
+      position: relative;
+    }
+    thead th::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0%;
+      height: 2px;
+      background: linear-gradient(90deg, #22d3ee, #4ade80, #818cf8);
+      transition: width 0.4s ease;
+    }
+    thead th:hover::after {
+      width: 100%;
+    }
+
+    tbody tr {
+      transition: all 0.25s ease;
+    }
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    tbody tr:hover {
+      background: rgba(99, 102, 241, 0.2);
+      transform: scale(1.01);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+    }
+
+    td {
+      padding: 0.9rem 1rem;
+      font-size: 0.95rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .text-emerald-300 {
+      color: #4ade80;
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+    }
+    .text-red-400 {
+      color: #f87171;
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+    }
+    .text-emerald-300:hover, .text-red-400:hover {
+      text-shadow: 0 0 15px currentColor;
+    }
+
+    body.light table {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    body.light thead {
+      background: rgba(0, 0, 0, 0.05);
+      color: #111;
+    }
+    body.light tbody tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.03);
+    }
+    body.light tbody tr:hover {
+      background: rgba(147, 197, 253, 0.25);
+      box-shadow: 0 0 16px rgba(37, 99, 235, 0.3);
+    }
 
     .fancy-btn {
       position: relative;
@@ -130,62 +224,67 @@
     }
   </style>
 </head>
+
 <body class="dark p-6 relative">
-  <!-- Background shapes container -->
   <div class="absolute inset-0 overflow-hidden -z-10">
     <div class="shape shape1"></div>
     <div class="shape shape2"></div>
   </div>
 
-  <!-- Mode Toggle -->
   <div class="flex justify-end mb-4 relative z-10">
     <button id="modeToggle" class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
       🌙 Dark Mode
     </button>
   </div>
 
-  <!-- Header -->
   <header class="text-center mb-12 relative z-10 animate-section">
     <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
-    <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto dark:text-white/80 light:text-gray-700">
-      Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic daily estimates</span> with smoothing + charts.
+    <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
+      Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
     </p>
   </header>
 
-  <!-- Main -->
   <main class="max-w-5xl mx-auto space-y-12 relative z-10">
-    <!-- Input Section -->
     <section class="glass animate-section">
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
-      <textarea
-        id="dataInput"
-        rows="6"
+      <textarea id="dataInput" rows="6"
         class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
-        placeholder="2025-01-01,1.2M
-2025-01-10,1350000
-2025-01-20,1.4M"
-      ></textarea>
+        placeholder="2025-01-01 10:30:00,1.2M
+2025-01-02 12:15:00,1350000
+2025-01-03 14:45:00,1.4M"></textarea>
+
+      <div class="mt-4">
+        <label for="intervalMode" class="font-semibold">Estimation Interval:</label>
+        <select id="intervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+          <option value="day">Daily</option>
+          <option value="hour">Hourly</option>
+          <option value="minute">Minutely</option>
+          <option value="second">Secondly</option>
+        </select>
+      </div>
+
       <button id="estimateBtn" class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
         🚀 Estimate Growth
       </button>
     </section>
 
-    <!-- Results Section -->
     <section id="resultsSection" class="hidden glass space-y-8 animate-section">
       <h2 class="text-2xl font-semibold">2. Estimates</h2>
       <div class="overflow-x-auto">
         <table id="resultTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
       </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="glass p-4">
           <h3 class="font-semibold mb-2">Subscribers</h3>
           <canvas id="subsChart" class="w-full h-72"></canvas>
         </div>
         <div class="glass p-4">
-          <h3 class="font-semibold mb-2">Daily Gains</h3>
+          <h3 class="font-semibold mb-2">Gains</h3>
           <canvas id="gainChart" class="w-full h-72"></canvas>
         </div>
       </div>
+
       <div class="flex flex-wrap gap-4">
         <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇ Download CSV</button>
         <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
@@ -197,187 +296,133 @@
   <div id="toast">Copied!</div>
 
   <script>
-    const dayMs = 86400000;
-    let currentMode = "dark"; // default
+    const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
+    let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
 
-    const toggleBtn = document.getElementById("modeToggle");
-    toggleBtn.addEventListener("click", () => {
+    function showToast() {
+      const t=document.getElementById("toast");
+      t.classList.add("show");
+      clearTimeout(window.toastTimeout);
+      window.toastTimeout=setTimeout(()=>t.classList.remove("show"),1500);
+    }
+    function copyText(text){navigator.clipboard.writeText(text).then(showToast);}
+    function downloadCSV(data){
+      const header=["Date/Time","Subscribers","Gain"];
+      const rows=data.map((r,i)=>[new Date(r.ts).toLocaleString(),r.count,i?r.count-data[i-1].count:0]);
+      const csv=[header,...rows].map(r=>r.join(",")).join("\n");
+      const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="subscriber-estimates.csv";a.click();
+    }
+
+    document.getElementById("modeToggle").addEventListener("click",()=>{
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
-      currentMode = document.body.classList.contains("dark") ? "dark" : "light";
-      toggleBtn.textContent = currentMode === "dark" ? "🌙 Dark Mode" : "☀️ Light Mode";
+      currentMode=document.body.classList.contains("dark")?"dark":"light";
       renderCharts(est);
     });
 
-    // --- Parse ---
-    const parseCount = (raw) => {
-      const cleaned = raw.replace(/,/g, '').trim().toLowerCase();
-      const match = cleaned.match(/^([\d.]+)([kmb]?)$/);
-      if (!match) return NaN;
-      const num = parseFloat(match[1]);
-      const multipliers = { k: 1e3, m: 1e6, b: 1e9 };
-      return Math.round(num * (multipliers[match[2]] || 1));
-    };
-    const parseInput = (raw) => {
-      return raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
-        line = line.replace(/[–—]/g, '-');
-        const [dateStr, countStr] = line.split(',');
-        const ts = Date.parse(dateStr.trim());
-        if (isNaN(ts)) throw new Error(`Bad date: "${line}"`);
-        const count = parseCount(countStr.trim());
-        if (isNaN(count)) throw new Error(`Bad count: "${line}"`);
-        return { ts, count };
-      }).sort((a, b) => a.ts - b.ts);
+    const parseCount=r=>{
+      const c=r.replace(/,/g,"").trim().toLowerCase();
+      const m=c.match(/^([\d.]+)([kmb]?)$/);
+      if(!m)return NaN;
+      const num=parseFloat(m[1]);
+      const multi={k:1e3,m:1e6,b:1e9};
+      return Math.round(num*(multi[m[2]]||1));
     };
 
-    // --- Interpolation ---
-    function interpolate(points) {
-      const output = [];
-      for (let i = 0; i < points.length - 1; i++) {
-        const start = points[i];
-        const end = points[i + 1];
-        const daysBetween = Math.max(1, Math.round((end.ts - start.ts) / dayMs));
-        const totalGain = end.count - start.count;
-        const avgGain = totalGain / daysBetween;
-        const variation = 0.15;
+    const parseInput=r=>{
+      return r.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+        const[d,v]=l.split(",");
+        const ts=Date.parse(d.trim());
+        if(isNaN(ts))throw new Error(`Invalid date/time: ${l}`);
+        const count=parseCount(v.trim());
+        if(isNaN(count))throw new Error(`Invalid count: ${l}`);
+        return{ts,count};
+      }).sort((a,b)=>a.ts-b.ts);
+    };
 
-        let dailyGains = Array.from({ length: daysBetween }, () => {
-          let factor = 1 + (Math.random() * 2 * variation - variation);
-          if (factor > 1.25) factor = 1.25;
-          if (factor < 0.75) factor = 0.75;
-          return avgGain * factor;
-        });
-
-        const sumGains = dailyGains.reduce((a, b) => a + b, 0);
-        dailyGains = dailyGains.map((g) => Math.round((g * totalGain) / sumGains));
-        const fix = totalGain - dailyGains.reduce((a, b) => a + b, 0);
-        dailyGains[dailyGains.length - 1] += fix;
-
-        if (i === 0) output.push({ ts: start.ts, count: start.count });
-        let current = start.count;
-        for (let d = 0; d < daysBetween; d++) {
-          current += dailyGains[d];
-          output.push({ ts: start.ts + (d + 1) * dayMs, count: current });
+    function interpolate(points,mode){
+      const step=units[mode];const out=[];
+      for(let i=0;i<points.length-1;i++){
+        const s=points[i],e=points[i+1];
+        const diff=e.ts-s.ts;
+        const steps=Math.max(1,Math.floor(diff/step));
+        if(mode==="second"&&steps>2000000)throw new Error("⚠ Too fine interval. Try hourly/minutely.");
+        const total=e.count-s.count;
+        const avg=total/steps;const varr=0.15;
+        if(i===0)out.push({ts:s.ts,count:s.count});
+        let c=s.count;
+        for(let d=0;d<steps;d++){
+          let f=1+(Math.random()*2*varr-varr);
+          f=Math.max(0.75,Math.min(1.25,f));
+          c+=avg*f;
+          out.push({ts:s.ts+(d+1)*step,count:Math.round(c)});
         }
-      }
-      return output;
-    }
-
-    // --- Plateau smoothing ---
-    function smoothPlateaus(data) {
-      const out = data.map(r => ({ ts: r.ts, count: r.count }));
-      for (let i = 1; i < out.length;) {
-        const gain = out[i].count - out[i - 1].count;
-        if (gain !== 0 && gain % 100000 === 0) {
-          let start = i - 1, end = i;
-          while (end + 1 < out.length && out[end + 1].count - out[end].count === gain) end++;
-          const length = end - start;
-          if (length >= 2) {
-            const total = gain * length;
-            let multipliers = Array.from({ length }, () => 0.9 + Math.random() * 0.2);
-            const sumMult = multipliers.reduce((a, b) => a + b, 0);
-            let gains = multipliers.map((m) => Math.round((m * total) / sumMult));
-            const fix = total - gains.reduce((a, b) => a + b, 0);
-            gains[gains.length - 1] += fix;
-            let c = out[start].count;
-            for (let d = 0; d < length; d++) {
-              c += gains[d];
-              out[start + 1 + d].count = c;
-            }
-          }
-          i = end + 1;
-        } else i++;
       }
       return out;
     }
 
-    let subsChart = null, gainChart = null, gainsArr = [], est = [];
+    const smoothPlateaus=d=>{
+      const o=d.map(r=>({...r}));
+      for(let i=1;i<o.length;){
+        const g=o[i].count-o[i-1].count;
+        if(g!==0&&g%100000===0){
+          let s=i-1,e=i;while(e+1<o.length&&o[e+1].count-o[e].count===g)e++;
+          const len=e-s;if(len>=2){
+            const tot=g*len;
+            let m=Array.from({length:len},()=>0.9+Math.random()*0.2);
+            const sum=m.reduce((a,b)=>a+b,0);
+            let gs=m.map(x=>Math.round((x*tot)/sum));
+            const fix=tot-gs.reduce((a,b)=>a+b,0);
+            gs[gs.length-1]+=fix;
+            let c=o[s].count;
+            for(let d=0;d<len;d++){c+=gs[d];o[s+1+d].count=c;}
+          }
+          i=e+1;
+        }else i++;
+      }return o;
+    };
 
-    function renderTable(data) {
-      const tbl = document.getElementById('resultTable');
-      let html = '<thead><tr><th class="px-4 py-2">Date</th><th class="px-4 py-2">Subscribers</th><th class="px-4 py-2">Daily Gain</th></tr></thead><tbody>';
-      gainsArr = [];
-      data.forEach((r, i) => {
-        const gain = i ? r.count - data[i - 1].count : 0;
-        if (i) gainsArr.push(gain);
-        const sign = gain > 0 ? '+' : gain < 0 ? '-' : '';
-        const cls = gain > 0 ? 'text-emerald-300' : gain < 0 ? 'text-red-400' : 'text-white/60';
-        html += `<tr>
-          <td class="px-4 py-2 font-mono">${new Date(r.ts).toISOString().split('T')[0]}</td>
-          <td class="px-4 py-2">${r.count.toLocaleString()}</td>
-          <td class="px-4 py-2 ${cls} font-semibold">${sign}${Math.abs(gain).toLocaleString()}</td>
-        </tr>`;
+    function renderTable(data){
+      const tbl=document.getElementById("resultTable");
+      let h="<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
+      gainsArr=[];
+      data.forEach((r,i)=>{
+        const g=i?r.count-data[i-1].count:0;
+        if(i)gainsArr.push(g);
+        const s=g>0?"+":g<0?"-":"";
+        const cls=g>0?"text-emerald-300":g<0?"text-red-400":"text-white/60";
+        h+=`<tr><td>${new Date(r.ts).toLocaleString()}</td><td>${r.count.toLocaleString()}</td><td class="${cls}">${s}${Math.abs(g).toLocaleString()}</td></tr>`;
       });
-      html += '</tbody>';
-      tbl.innerHTML = html;
+      tbl.innerHTML=h+"</tbody>";
     }
 
-    function buildChart(ctx, labels, data, label, color) {
-      const darkMode = currentMode === "dark";
-      return new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets: [{ label, data, tension: 0.35, pointRadius: 0, borderColor: color }] },
-        options: {
-          plugins: { legend: { labels: { color: darkMode ? '#fff' : '#000' } } },
-          scales: {
-            x: { ticks: { color: darkMode ? '#fff' : '#000' }, grid: { color: darkMode ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)' } },
-            y: { ticks: { color: darkMode ? '#fff' : '#000' }, grid: { color: darkMode ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)' } },
-          },
-        },
-      });
+    function renderCharts(d){
+      const lbls=d.map(r=>new Date(r.ts).toLocaleString());
+      const counts=d.map(r=>r.count);
+      subsChart?.destroy();gainChart?.destroy();
+      subsChart=new Chart(document.getElementById("subsChart"),{type:"line",data:{labels:lbls,datasets:[{label:"Subscribers",data:counts,borderColor:"#4ade80",tension:0.3,pointRadius:0}]},options:{plugins:{legend:{labels:{color:"#fff"}}},scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}});
+      gainChart=new Chart(document.getElementById("gainChart"),{type:"line",data:{labels:lbls.slice(1),datasets:[{label:"Gain",data:gainsArr,borderColor:"#38bdf8",tension:0.3,pointRadius:0}]},options:{plugins:{legend:{labels:{color:"#fff"}}},scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}});
     }
 
-    function renderCharts(data) {
-      const labels = data.map(r => new Date(r.ts).toISOString().split('T')[0]);
-      const counts = data.map(r => r.count);
-      subsChart?.destroy();
-      gainChart?.destroy();
-      subsChart = buildChart(document.getElementById('subsChart').getContext('2d'), labels, counts, 'Subscribers', '#4ade80');
-      gainChart = buildChart(document.getElementById('gainChart').getContext('2d'), labels.slice(1), gainsArr, 'Daily Gain', '#38bdf8');
-    }
-
-    function showToast() {
-      const t = document.getElementById('toast');
-      t.classList.add('show');
-      clearTimeout(window.toastTimeout);
-      window.toastTimeout = setTimeout(() => t.classList.remove('show'), 1500);
-    }
-    function copyText(text) { navigator.clipboard.writeText(text).then(showToast); }
-    function downloadCSV(data) {
-      const header = ['Date', 'Subscribers', 'Daily Gain'];
-      const rows = data.map((r, i) => [new Date(r.ts).toISOString().split('T')[0], r.count, i ? r.count - data[i - 1].count : 0]);
-      const csvContent = [header, ...rows].map(r => r.join(',')).join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'subscriber-estimates.csv'; a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    document.getElementById('estimateBtn').addEventListener('click', () => {
-      const input = document.getElementById('dataInput').value;
-      if (!input.trim()) { alert('Please enter your data first.'); return; }
-      let points;
-      try {
-        points = parseInput(input);
-        if (points.length < 2) { alert('Please enter at least two data points.'); return; }
-      } catch (e) { alert(e.message); return; }
-      let estimated = interpolate(points);
-      estimated = smoothPlateaus(estimated);
-      est = estimated;
-      renderTable(estimated);
-      renderCharts(estimated);
-      document.getElementById('resultsSection').classList.remove('hidden');
+    document.getElementById("estimateBtn").addEventListener("click",()=>{
+      const val=document.getElementById("dataInput").value;
+      const mode=document.getElementById("intervalMode").value;
+      if(!val.trim())return alert("Enter data first.");
+      let pts;
+      try{pts=parseInput(val);if(pts.length<2)return alert("Need at least two points.");}
+      catch(e){return alert(e.message);}
+      try{
+        let estd=interpolate(pts,mode);
+        estd=smoothPlateaus(estd);
+        est=estd;renderTable(estd);renderCharts(estd);
+        document.getElementById("resultsSection").classList.remove("hidden");
+      }catch(e){alert(e.message);}
     });
 
-    document.getElementById('copyGainsVertBtn').addEventListener('click', () => {
-      if (!est.length) return;
-      copyText(gainsArr.map(g => (g < 0 ? '-' : '+') + Math.abs(g).toLocaleString()).join('\n'));
-    });
-    document.getElementById('copyGainsHorizBtn').addEventListener('click', () => {
-      if (!est.length) return;
-      copyText(gainsArr.map(g => (g < 0 ? '-' : '+') + Math.abs(g).toLocaleString()).join('\t'));
-    });
-    document.getElementById('downloadBtn').addEventListener('click', () => { if (est.length) downloadCSV(est); });
+    document.getElementById("copyGainsVertBtn").addEventListener("click",()=>{if(!est.length)return;copyText(gainsArr.map(g=>(g<0?"-":"+")+Math.abs(g).toLocaleString()).join("\n"));});
+    document.getElementById("copyGainsHorizBtn").addEventListener("click",()=>{if(!est.length)return;copyText(gainsArr.map(g=>(g<0?"-":"+")+Math.abs(g).toLocaleString()).join("\t"));});
+    document.getElementById("downloadBtn").addEventListener("click",()=>{if(est.length)downloadCSV(est);});
   </script>
 </body>
 </html>
