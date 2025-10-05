@@ -94,7 +94,7 @@
       100% { opacity: 0.6; }
     }
 
-    /* ————— ENHANCED TABLE STYLING ————— */
+    /* Fancy Table Styling */
     table {
       border-collapse: separate;
       border-spacing: 0;
@@ -150,16 +150,10 @@
       background: linear-gradient(90deg, #22d3ee, #4ade80, #818cf8);
       transition: width 0.4s ease;
     }
-    thead th:hover::after {
-      width: 100%;
-    }
+    thead th:hover::after { width: 100%; }
 
-    tbody tr {
-      transition: all 0.25s ease;
-    }
-    tbody tr:nth-child(even) {
-      background: rgba(255, 255, 255, 0.05);
-    }
+    tbody tr { transition: all 0.25s ease; }
+    tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.05); }
     tbody tr:hover {
       background: rgba(99, 102, 241, 0.2);
       transform: scale(1.01);
@@ -172,56 +166,18 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .text-emerald-300 {
-      color: #4ade80;
-      font-weight: 600;
-      text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
-      transition: color 0.3s ease, text-shadow 0.3s ease;
-    }
-    .text-red-400 {
-      color: #f87171;
-      font-weight: 600;
-      text-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
-      transition: color 0.3s ease, text-shadow 0.3s ease;
-    }
-    .text-emerald-300:hover, .text-red-400:hover {
-      text-shadow: 0 0 15px currentColor;
-    }
+    .text-emerald-300 { color: #4ade80; font-weight: 600; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); }
+    .text-red-400 { color: #f87171; font-weight: 600; text-shadow: 0 0 8px rgba(248, 113, 113, 0.4); }
 
-    body.light table {
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    }
-    body.light thead {
-      background: rgba(0, 0, 0, 0.05);
-      color: #111;
-    }
-    body.light tbody tr:nth-child(even) {
-      background: rgba(0, 0, 0, 0.03);
-    }
-    body.light tbody tr:hover {
-      background: rgba(147, 197, 253, 0.25);
-      box-shadow: 0 0 16px rgba(37, 99, 235, 0.3);
-    }
+    body.light table { background: rgba(255,255,255,0.9); }
+    body.light thead { background: rgba(0,0,0,0.05); color: #111; }
+    body.light tbody tr:nth-child(even) { background: rgba(0,0,0,0.03); }
 
-    .fancy-btn {
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.25s ease, box-shadow 0.3s ease;
-    }
-    .fancy-btn:hover {
-      transform: translateY(-2px) scale(1.03);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
+    .fancy-btn { position: relative; overflow: hidden; transition: transform 0.25s ease, box-shadow 0.3s ease; }
+    .fancy-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
 
-    .animate-section {
-      animation: fadeUp 0.8s ease forwards;
-      opacity: 0;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0px); }
-    }
+    .animate-section { animation: fadeUp 0.8s ease forwards; opacity: 0; }
+    @keyframes fadeUp { from {opacity:0;transform:translateY(20px);} to {opacity:1;transform:translateY(0);} }
   </style>
 </head>
 
@@ -253,14 +209,33 @@
 2025-01-02 12:15:00,1350000
 2025-01-03 14:45:00,1.4M"></textarea>
 
-      <div class="mt-4">
-        <label for="intervalMode" class="font-semibold">Estimation Interval:</label>
-        <select id="intervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
-          <option value="day">Daily</option>
-          <option value="hour">Hourly</option>
-          <option value="minute">Minutely</option>
-          <option value="second">Secondly</option>
-        </select>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label for="intervalMode" class="font-semibold">Estimation Interval:</label>
+          <select id="intervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="day">Daily</option>
+            <option value="hour">Hourly</option>
+            <option value="minute">Minutely</option>
+            <option value="second">Secondly</option>
+          </select>
+        </div>
+        <div>
+          <label for="timeFormat" class="font-semibold">Time Format:</label>
+          <select id="timeFormat" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="12">12-Hour (AM/PM)</option>
+            <option value="24">24-Hour (Military)</option>
+          </select>
+        </div>
+        <div>
+          <label for="timeZone" class="font-semibold">Time Zone:</label>
+          <select id="timeZone" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="local">Local System</option>
+            <option value="America/New_York">Eastern (EST)</option>
+            <option value="America/Chicago">Central (CST)</option>
+            <option value="America/Denver">Mountain (MST)</option>
+            <option value="America/Los_Angeles">Pacific (PST)</option>
+          </select>
+        </div>
       </div>
 
       <button id="estimateBtn" class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
@@ -299,6 +274,16 @@
     const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
     let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
 
+    const formatDate = (ts) => {
+      const tz = document.getElementById("timeZone").value;
+      const tf = document.getElementById("timeFormat").value;
+      const options = { timeZone: tz === "local" ? undefined : tz, 
+                        hour12: tf === "12", 
+                        year: 'numeric', month: 'short', day: '2-digit', 
+                        hour: '2-digit', minute: '2-digit', second: '2-digit' };
+      return new Intl.DateTimeFormat(undefined, options).format(new Date(ts));
+    };
+
     function showToast() {
       const t=document.getElementById("toast");
       t.classList.add("show");
@@ -308,7 +293,7 @@
     function copyText(text){navigator.clipboard.writeText(text).then(showToast);}
     function downloadCSV(data){
       const header=["Date/Time","Subscribers","Gain"];
-      const rows=data.map((r,i)=>[new Date(r.ts).toLocaleString(),r.count,i?r.count-data[i-1].count:0]);
+      const rows=data.map((r,i)=>[formatDate(r.ts),r.count,i?r.count-data[i-1].count:0]);
       const csv=[header,...rows].map(r=>r.join(",")).join("\n");
       const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="subscriber-estimates.csv";a.click();
@@ -392,13 +377,13 @@
         if(i)gainsArr.push(g);
         const s=g>0?"+":g<0?"-":"";
         const cls=g>0?"text-emerald-300":g<0?"text-red-400":"text-white/60";
-        h+=`<tr><td>${new Date(r.ts).toLocaleString()}</td><td>${r.count.toLocaleString()}</td><td class="${cls}">${s}${Math.abs(g).toLocaleString()}</td></tr>`;
+        h+=`<tr><td>${formatDate(r.ts)}</td><td>${r.count.toLocaleString()}</td><td class="${cls}">${s}${Math.abs(g).toLocaleString()}</td></tr>`;
       });
       tbl.innerHTML=h+"</tbody>";
     }
 
     function renderCharts(d){
-      const lbls=d.map(r=>new Date(r.ts).toLocaleString());
+      const lbls=d.map(r=>formatDate(r.ts));
       const counts=d.map(r=>r.count);
       subsChart?.destroy();gainChart?.destroy();
       subsChart=new Chart(document.getElementById("subsChart"),{type:"line",data:{labels:lbls,datasets:[{label:"Subscribers",data:counts,borderColor:"#4ade80",tension:0.3,pointRadius:0}]},options:{plugins:{legend:{labels:{color:"#fff"}}},scales:{x:{ticks:{color:"#fff"}},y:{ticks:{color:"#fff"}}}}});
@@ -423,6 +408,9 @@
     document.getElementById("copyGainsVertBtn").addEventListener("click",()=>{if(!est.length)return;copyText(gainsArr.map(g=>(g<0?"-":"+")+Math.abs(g).toLocaleString()).join("\n"));});
     document.getElementById("copyGainsHorizBtn").addEventListener("click",()=>{if(!est.length)return;copyText(gainsArr.map(g=>(g<0?"-":"+")+Math.abs(g).toLocaleString()).join("\t"));});
     document.getElementById("downloadBtn").addEventListener("click",()=>{if(est.length)downloadCSV(est);});
+
+    // Re-render table instantly when time format or zone changes
+    ["timeFormat","timeZone"].forEach(id=>document.getElementById(id).addEventListener("change",()=>{if(est.length)renderTable(est);}));
   </script>
 </body>
 </html>
