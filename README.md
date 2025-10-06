@@ -1,1 +1,4 @@
-Powered by HB Statistics, this sophisticated Subscriber Growth Tracker delivers accurate daily subscriber estimates derived from your verified milestones. Featuring dynamic charts and comprehensive tables with realistic daily fluctuations, it is an essential tool for analysts, content creators, and industry professionals seeking in-depth insights into channel growth. Effortlessly export data to Excel and gain a clear, professional visualization of your subscriber trajectory.
+Powered by HB Statistics — this sophisticated Subscriber Growth Tracker delivers accurate daily subscriber estimates derived from your verified milestones. Featuring dynamic charts and comprehensive tables with realistic daily fluctuations, it is an essential tool for analysts, content creators, and industry professionals seeking in-depth insights into channel growth. Effortlessly export data to Excel and gain a clear, professional visualization of your subscriber trajectory.
+
+If you use this estimator in your videos or projects, please include visible credit such as:
+"Powered by HB Statistics — https://hbstatistics.github.io/Auto-Subscriber-Estimator/
