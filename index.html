@@ -20,6 +20,7 @@
       animation: gradientShift 15s ease infinite;
       color: #fff;
     }
+
     body.light {
       background: linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9);
       color: #111;
@@ -38,6 +39,7 @@
       opacity: 0.4;
       animation: floaty 20s ease-in-out infinite;
     }
+
     .shape1 { width: 300px; height: 300px; top: 10%; left: 10%; background: #6366f1; }
     .shape2 { width: 400px; height: 400px; bottom: 15%; right: 15%; background: #22d3ee; animation-delay: -10s; }
 
@@ -55,6 +57,7 @@
       position: relative;
       z-index: 1;
     }
+
     body.light .glass {
       background: rgba(255,255,255,0.85);
       box-shadow: 0 8px 24px rgba(0,0,0,0.1);
@@ -76,12 +79,9 @@
       transition: opacity 0.3s ease, transform 0.3s ease;
       z-index: 9999;
     }
+
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
-    .underline-glow {
-      position: relative;
-      display: inline-block;
-    }
     .underline-glow::after {
       content: '';
       position: absolute;
@@ -93,11 +93,6 @@
       border-radius: 3px;
       animation: glow 3s linear infinite;
     }
-    @keyframes glow {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-    }
 
     table {
       border-collapse: separate;
@@ -108,28 +103,11 @@
       backdrop-filter: blur(10px);
       background: rgba(255,255,255,0.05);
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      position: relative;
-      z-index: 2;
-      transition: all 0.3s ease;
-    }
-
-    table::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 1rem;
-      padding: 2px;
-      background: linear-gradient(90deg, #22d3ee, #4ade80, #818cf8);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask-composite: exclude;
-      -webkit-mask-composite: destination-out;
-      z-index: -1;
     }
 
     thead {
       position: sticky;
       top: 0;
-      z-index: 3;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(16px);
       color: #e0f2fe;
@@ -140,23 +118,16 @@
       border-bottom: 2px solid rgba(255,255,255,0.2);
     }
 
-    tbody tr:nth-child(even) { background: rgba(255,255,255,0.05); }
-    tbody tr:hover {
-      background: rgba(99,102,241,0.2);
-      transform: scale(1.01);
-      box-shadow: 0 0 20px rgba(99,102,241,0.25);
-    }
-
     td {
       padding: 0.9rem 1rem;
       font-size: 0.95rem;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .text-emerald-300 { color: #4ade80; font-weight: 600; text-shadow: 0 0 8px rgba(74,222,128,0.4); }
-    .text-red-400 { color: #f87171; font-weight: 600; text-shadow: 0 0 8px rgba(248,113,113,0.4); }
+    .text-emerald-300 { color: #4ade80; font-weight: 600; }
+    .text-red-400 { color: #f87171; font-weight: 600; }
 
-    .fancy-btn { position: relative; overflow: hidden; transition: transform 0.25s ease, box-shadow 0.3s ease; }
+    .fancy-btn { transition: transform 0.25s ease, box-shadow 0.3s ease; }
     .fancy-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
 
     .animate-section { animation: fadeUp 0.8s ease forwards; opacity: 0; }
@@ -182,12 +153,11 @@
       Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
     </p>
   </header>
-
   <main class="max-w-5xl mx-auto space-y-12 relative z-10">
     <section class="glass animate-section">
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
       <textarea id="dataInput" rows="6"
-        class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md border-2 border-transparent focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
+        class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
         placeholder="2025-01-01 10:30:00,1.2M
 2025-01-02 12:15:00,1350000
 2025-01-03 14:45:00,1.4M"></textarea>
@@ -221,280 +191,289 @@
         </div>
       </div>
 
-      <button id="estimateBtn" class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+      <div class="flex flex-wrap gap-3 mt-4 items-center">
+        <button id="auditToggle"
+          class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+          🔍 Enable Audits
+        </button>
+
+        <label for="auditStrength" class="font-semibold ml-2">Intensity:</label>
+        <select id="auditStrength"
+          class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+          <option value="0.05">Calm</option>
+          <option value="0.12" selected>Moderate</option>
+          <option value="0.25">Volatile</option>
+        </select>
+
+        <label for="auditFreq" class="font-semibold ml-4">Frequency:</label>
+        <input id="auditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04"
+          class="w-32 accent-emerald-400">
+        <span id="freqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+      </div>
+
+      <!-- Beta Notice -->
+      <div class="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
+        ⚠️ <span class="text-white font-bold">Audits Feature (Beta)</span><br>
+        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
+        please report them to the HB Statistics developer team for review and improvement.
+      </div>
+
+      <button id="estimateBtn"
+        class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
         🚀 Estimate Growth
       </button>
     </section>
-  <section id="resultsSection" class="hidden glass space-y-8 animate-section">
-    <h2 class="text-2xl font-semibold">2. Estimates</h2>
-    <div class="overflow-x-auto">
-      <table id="resultTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="glass p-4">
-        <h3 class="font-semibold mb-2">Subscribers</h3>
-        <canvas id="subsChart" class="w-full h-72"></canvas>
+    <!-- ===== RESULTS SECTION ===== -->
+    <section id="resultsSection" class="hidden glass space-y-8 animate-section">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold">2. Estimates</h2>
+        <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">✅ Audits Active</span>
       </div>
-      <div class="glass p-4">
-        <h3 class="font-semibold mb-2">Gains</h3>
-        <canvas id="gainChart" class="w-full h-72"></canvas>
+
+      <div class="overflow-x-auto">
+        <table id="resultTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
       </div>
-    </div>
 
-    <div class="flex flex-wrap gap-4">
-      <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇ Download CSV</button>
-      <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
-      <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
-    </div>
-  </section>
-</main>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass p-4">
+          <h3 class="font-semibold mb-2">Subscribers</h3>
+          <canvas id="subsChart" class="w-full h-72"></canvas>
+        </div>
+        <div class="glass p-4">
+          <h3 class="font-semibold mb-2">Gains</h3>
+          <canvas id="gainChart" class="w-full h-72"></canvas>
+        </div>
+      </div>
 
-<div id="toast">Copied!</div>
+      <div class="flex flex-wrap gap-4">
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">
+          ⬇ Download CSV
+        </button>
+        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">
+          📋 Copy Gains (Vertical)
+        </button>
+        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">
+          📋 Copy Gains (Horizontal)
+        </button>
+      </div>
+    </section>
+  </main>
 
-<script>
-  const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
-  let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
+  <div id="toast">Copied!</div>
 
-  // --- Date Formatting ---
-  const formatDate = (ts) => {
-    const tz = document.getElementById("timeZone").value;
-    const tf = document.getElementById("timeFormat").value;
-    const options = {
-      timeZone: tz === "local" ? undefined : tz,
-      hour12: tf === "12",
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
+  <!-- ===== SCRIPT START ===== -->
+  <script>
+    const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
+    let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
+    let auditsEnabled = false;
+
+    // --- Frequency Label Update ---
+    const freqSlider = document.getElementById("auditFreq");
+    const freqLabel = document.getElementById("freqLabel");
+    freqSlider.addEventListener("input", () => {
+      freqLabel.textContent = Math.round(freqSlider.value * 100) + "%";
+    });
+
+    // --- Date Formatting ---
+    const formatDate = (ts) => {
+      const tz = document.getElementById("timeZone").value;
+      const tf = document.getElementById("timeFormat").value;
+      return new Intl.DateTimeFormat(undefined, {
+        timeZone: tz === "local" ? undefined : tz,
+        hour12: tf === "12",
+        year: "numeric", month: "short", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      }).format(new Date(ts));
     };
-    return new Intl.DateTimeFormat(undefined, options).format(new Date(ts));
-  };
 
-  // --- Parse Count (1.2M, 340K, etc.) ---
-  const parseCount = (r) => {
-    const c = r.replace(/,/g, "").trim().toLowerCase();
-    const m = c.match(/^([\d.]+)([kmb]?)$/);
-    if (!m) return NaN;
-    const num = parseFloat(m[1]);
-    const multi = { k: 1e3, m: 1e6, b: 1e9 };
-    return Math.round(num * (multi[m[2]] || 1));
-  };
+    // --- Audit Toggle ---
+    document.getElementById("auditToggle").addEventListener("click", (e) => {
+      auditsEnabled = !auditsEnabled;
+      document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
+      e.target.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+      e.target.classList.toggle("from-emerald-400", auditsEnabled);
+      e.target.classList.toggle("from-rose-400", !auditsEnabled);
+    });
 
-  // --- Parse Input Data ---
-  const parseInput = (r) => {
-    return r.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
-      const [d, v] = l.split(",");
-      const ts = Date.parse(d.trim());
-      if (isNaN(ts)) throw new Error(`Invalid date/time: ${l}`);
-      const count = parseCount(v.trim());
-      if (isNaN(count)) throw new Error(`Invalid count: ${l}`);
-      return { ts, c: count };
-    }).sort((a, b) => a.ts - b.ts);
-  };
+    // --- Parse Count ---
+    const parseCount = (r) => {
+      const c = r.replace(/,/g, "").trim().toLowerCase();
+      const m = c.match(/^([\d.]+)([kmb]?)$/);
+      if (!m) return NaN;
+      const num = parseFloat(m[1]);
+      const multi = { k: 1e3, m: 1e6, b: 1e9 };
+      return Math.round(num * (multi[m[2]] || 1));
+    };
 
-  // --- Interpolation (Midnight for Daily) ---
-  function interpolate(points, mode) {
-    const step = units[mode];
-    const output = [];
-    for (let i = 0; i < points.length - 1; i++) {
-      const s = points[i], e = points[i + 1];
-      let startTS;
-      if (mode === "day") {
-        const base = new Date(s.ts);
-        base.setHours(0, 0, 0, 0);
-        startTS = base.getTime();
-      } else {
-        startTS = s.ts;
-      }
-      const diff = e.ts - s.ts;
-      const steps = Math.max(1, Math.floor(diff / step));
-      const totalGain = e.c - s.c;
-      const avgGain = totalGain / steps;
-      const variation = 0.15;
-      if (i === 0) output.push({ ts: startTS, c: s.c });
-      let current = s.c;
+    // --- Parse Input Data ---
+    const parseInput = (r) =>
+      r.split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(l => {
+          const [d, v] = l.split(",");
+          const ts = Date.parse(d.trim());
+          if (isNaN(ts)) throw new Error(`Invalid date/time: ${l}`);
+          const count = parseCount(v.trim());
+          if (isNaN(count)) throw new Error(`Invalid count: ${l}`);
+          return { ts, c: count };
+        })
+        .sort((a, b) => a.ts - b.ts);
 
-      let increments = Array.from({ length: steps }, () => {
-        let f = 1 + (Math.random() * 2 * variation - variation);
-        f = Math.max(0.75, Math.min(1.25, f));
-        return avgGain * f;
-      });
-      const sum = increments.reduce((a, b) => a + b, 0);
-      increments = increments.map(g => Math.round((g * totalGain) / sum));
-      const fix = totalGain - increments.reduce((a, b) => a + b, 0);
-      increments[increments.length - 1] += fix;
+    // --- Interpolation ---
+    function interpolate(points, mode) {
+      const step = units[mode];
+      const output = [];
+      for (let i = 0; i < points.length - 1; i++) {
+        const s = points[i], e = points[i + 1];
+        const startTS = (mode === "day") ? new Date(s.ts).setHours(0, 0, 0, 0) : s.ts;
+        const diff = e.ts - s.ts;
+        const steps = Math.max(1, Math.floor(diff / step));
+        const totalGain = e.c - s.c;
+        const avgGain = totalGain / steps;
+        const variation = 0.15;
 
-      for (let d = 0; d < steps; d++) {
-        current += increments[d];
-        output.push({ ts: startTS + (d + 1) * step, c: current });
-      }
-    }
-    return output;
-  }
+        if (i === 0) output.push({ ts: startTS, c: s.c });
+        let acc = 0;
+        let increments = Array.from({ length: steps }, () =>
+          avgGain * (1 + (Math.random() - 0.5) * variation * 2)
+        );
+        const sum = increments.reduce((a, b) => a + b, 0);
+        increments = increments.map(g => (g * totalGain) / sum);
 
-  // --- Smooth Plateaus ---
-  function smoothPlateaus(data) {
-    const out = data.map(r => ({ ...r }));
-    for (let i = 1; i < out.length;) {
-      const g = out[i].c - out[i - 1].c;
-      if (g !== 0 && g % 100000 === 0) {
-        let s = i - 1, e = i;
-        while (e + 1 < out.length && out[e + 1].c - out[e].c === g) e++;
-        const len = e - s;
-        if (len >= 2) {
-          const tot = g * len;
-          let mult = Array.from({ length: len }, () => 0.9 + Math.random() * 0.2);
-          const sum = mult.reduce((a, b) => a + b, 0);
-          let gains = mult.map(x => Math.round((x * tot) / sum));
-          const fix = tot - gains.reduce((a, b) => a + b, 0);
-          gains[gains.length - 1] += fix;
-          let c = out[s].c;
-          for (let d = 0; d < len; d++) {
-            c += gains[d];
-            out[s + 1 + d].c = c;
-          }
+        for (let d = 0; d < steps; d++) {
+          acc += increments[d];
+          output.push({ ts: startTS + (d + 1) * step, c: Math.round(s.c + acc) });
         }
-        i = e + 1;
-      } else i++;
+      }
+      return output;
     }
-    return out;
-  }
 
-  // --- Render Table ---
-  function renderTable(data) {
-    const tbl = document.getElementById("resultTable");
-    let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
-    gainsArr = [];
-    data.forEach((r, i) => {
-      const g = i ? r.c - data[i - 1].c : 0;
-      if (i) gainsArr.push(g);
-      const sign = g > 0 ? "+" : g < 0 ? "-" : "";
-      const cls = g > 0 ? "text-emerald-300" : g < 0 ? "text-red-400" : "text-white/60";
-      h += `<tr><td>${formatDate(r.ts)}</td><td>${r.c.toLocaleString()}</td><td class="${cls}">${sign}${Math.abs(g).toLocaleString()}</td></tr>`;
-    });
-    tbl.innerHTML = h + "</tbody>";
-  }
+    function smoothPlateaus(data) {
+      return data.map(r => ({ ...r }));
+    }
 
-  // --- Render Charts ---
-  function renderCharts(data) {
-    const labels = data.map(r => formatDate(r.ts));
-    const counts = data.map(r => r.c);
-    subsChart?.destroy(); gainChart?.destroy();
-    const txt = currentMode === "dark" ? "#fff" : "#000";
-
-    subsChart = new Chart(document.getElementById("subsChart"), {
-      type: "line",
-      data: { labels, datasets: [{ label: "Subscribers", data: counts, borderColor: "#4ade80", tension: 0.3, pointRadius: 0 }] },
-      options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
-    });
-
-    gainChart = new Chart(document.getElementById("gainChart"), {
-      type: "line",
-      data: { labels: labels.slice(1), datasets: [{ label: "Gain", data: gainsArr, borderColor: "#38bdf8", tension: 0.3, pointRadius: 0 }] },
-      options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
-    });
-  }
-  // --- Toast System ---
-  function showToast() {
-    const t = document.getElementById("toast");
-    t.classList.add("show");
-    clearTimeout(window.toastTimeout);
-    window.toastTimeout = setTimeout(() => t.classList.remove("show"), 1500);
-  }
-  function copyText(text) {
-    navigator.clipboard.writeText(text).then(showToast);
-  }
-
-  // --- CSV Download ---
-  function downloadCSV(data) {
-    const header = ["Date/Time", "Subscribers", "Gain"];
-    const rows = data.map((r, i) => [
-      formatDate(r.ts),
-      r.c,
-      i ? r.c - data[i - 1].c : 0
-    ]);
-    const csv = [header, ...rows].map(r => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "subscriber-estimates.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // --- Mode Toggle ---
-  document.getElementById("modeToggle").addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    document.body.classList.toggle("light");
-    currentMode = document.body.classList.contains("dark") ? "dark" : "light";
-    renderCharts(est);
-  });
-
-  // --- Estimate Button Fix ---
-  document.addEventListener("DOMContentLoaded", () => {
-    const estimateBtn = document.getElementById("estimateBtn");
-    if (!estimateBtn) return;
-
-    estimateBtn.addEventListener("click", () => {
-      const val = document.getElementById("dataInput").value;
-      const mode = document.getElementById("intervalMode").value;
-      if (!val.trim()) return alert("Enter data first.");
-
-      let pts;
-      try {
-        pts = parseInput(val);
-        if (pts.length < 2) return alert("Need at least two points.");
-      } catch (e) {
-        return alert(e.message);
+    // --- Smooth MrBeast-Style Audits ---
+    function applyAudits(data) {
+      const intensity = parseFloat(document.getElementById("auditStrength").value);
+      const freq = parseFloat(document.getElementById("auditFreq").value);
+      const out = data.map(r => ({ ...r }));
+      let drift = 0;
+      for (let i = 1; i < out.length; i++) {
+        if (Math.random() < freq) {
+          const direction = Math.random() < 0.5 ? -1 : 1;
+          drift += direction * out[i].c * intensity * 0.0004 * (Math.random() * 0.8 + 0.4);
+        }
+        drift *= 0.92;
+        out[i].c = Math.max(0, out[i].c + Math.round(drift));
       }
+      return out;
+    }
 
-      try {
-        let estd = interpolate(pts, mode);
-        estd = smoothPlateaus(estd);
-        est = estd;
-        renderTable(estd);
-        renderCharts(estd);
-        document.getElementById("resultsSection").classList.remove("hidden");
-      } catch (e) {
-        alert(e.message);
-      }
+    // --- Render Table ---
+    function renderTable(data) {
+      const tbl = document.getElementById("resultTable");
+      let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
+      gainsArr = [];
+      data.forEach((r, i) => {
+        const g = i ? r.c - data[i - 1].c : 0;
+        if (i) gainsArr.push(g);
+        const cls = g > 0 ? "text-emerald-300" : g < 0 ? "text-red-400" : "text-white/60";
+        const sign = g > 0 ? "+" : g < 0 ? "–" : "";
+        h += `<tr><td>${formatDate(r.ts)}</td><td>${r.c.toLocaleString()}</td><td class="${cls}">${sign}${Math.abs(g).toLocaleString()}</td></tr>`;
+      });
+      tbl.innerHTML = h + "</tbody>";
+    }
+
+    // --- Render Charts ---
+    function renderCharts(data) {
+      const labels = data.map(r => formatDate(r.ts));
+      const counts = data.map(r => r.c);
+      subsChart?.destroy();
+      gainChart?.destroy();
+      const txt = currentMode === "dark" ? "#fff" : "#000";
+
+      subsChart = new Chart(document.getElementById("subsChart"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "Subscribers", data: counts, borderColor: "#4ade80", tension: 0.35, pointRadius: 0 }] },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      gainChart = new Chart(document.getElementById("gainChart"), {
+        type: "line",
+        data: { labels: labels.slice(1), datasets: [{ label: "Gain", data: gainsArr, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0 }] },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+    }
+
+    // --- Toast + Copy Helpers ---
+    const showToast = () => {
+      const t = document.getElementById("toast");
+      t.classList.add("show");
+      clearTimeout(window.toastTimeout);
+      window.toastTimeout = setTimeout(() => t.classList.remove("show"), 1500);
+    };
+    const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
+
+    // --- Download CSV ---
+    function downloadCSV(data) {
+      const csv = [["Date/Time","Subscribers","Gain"], ...data.map((r,i)=>[formatDate(r.ts),r.c,i? r.c-data[i-1].c:0])].map(r=>r.join(",")).join("\n");
+      const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="subscriber-estimates.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // --- Dark / Light Mode Toggle ---
+    document.getElementById("modeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+      currentMode = document.body.classList.contains("dark") ? "dark" : "light";
+      renderCharts(est);
     });
 
-    // --- Copy / Download Controls ---
-    document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
-      if (!est.length) return;
-      copyText(
-        gainsArr
-          .map(g => (g < 0 ? "-" : "+") + Math.abs(g).toLocaleString())
-          .join("\n")
+    // --- Main Execution ---
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("estimateBtn").addEventListener("click", () => {
+        const val = document.getElementById("dataInput").value;
+        const mode = document.getElementById("intervalMode").value;
+        if (!val.trim()) return alert("Enter data first.");
+        let pts;
+        try {
+          pts = parseInput(val);
+          if (pts.length < 2) return alert("Need at least two points.");
+        } catch (e) { return alert(e.message); }
+
+        try {
+          let estd = interpolate(pts, mode);
+          estd = smoothPlateaus(estd);
+          if (auditsEnabled) estd = applyAudits(estd);
+          est = estd;
+          renderTable(estd);
+          renderCharts(estd);
+          document.getElementById("resultsSection").classList.remove("hidden");
+        } catch (e) { alert(e.message); }
+      });
+
+      document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(gainsArr.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyGainsHorizBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(gainsArr.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("downloadBtn").addEventListener("click", () => {
+        if (est.length) downloadCSV(est);
+      });
+      ["timeFormat", "timeZone"].forEach(id =>
+        document.getElementById(id).addEventListener("change", () => {
+          if (est.length) renderTable(est);
+        })
       );
     });
-
-    document.getElementById("copyGainsHorizBtn").addEventListener("click", () => {
-      if (!est.length) return;
-      copyText(
-        gainsArr
-          .map(g => (g < 0 ? "-" : "+") + Math.abs(g).toLocaleString())
-          .join("\t")
-      );
-    });
-
-    document.getElementById("downloadBtn").addEventListener("click", () => {
-      if (est.length) downloadCSV(est);
-    });
-
-    // --- Re-render table instantly on time format / zone change ---
-    ["timeFormat", "timeZone"].forEach(id =>
-      document.getElementById(id).addEventListener("change", () => {
-        if (est.length) renderTable(est);
-      })
-    );
-  });
-</script>
+  </script>
 </body>
 </html>
-
