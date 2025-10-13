@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HB Statistics • Subscriber Growth Tracker</title>
+  <link rel="icon" type="image/png" href="https://images.socialblade.com/256x,q75/https://yt3.ggpht.com/veDA1FfRTsN5P5U97lgW9TRP4u0FnGRQIphD1DQs5TRvoHqZHU4xizu0UxIx5GMdnvKa8mkxQzw=s192-c-k-c0x00ffffff-no-rj">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -82,8 +83,14 @@
 
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
 
+    /* === Underline Glow Fix === */
+    .underline-glow {
+      position: relative;
+      display: inline-block;
+    }
+
     .underline-glow::after {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       bottom: -6px;
@@ -92,6 +99,12 @@
       background: linear-gradient(to right, #22d3ee, #4ade80, #818cf8);
       border-radius: 3px;
       animation: glow 3s linear infinite;
+    }
+
+    @keyframes glow {
+      0% { filter: brightness(1); opacity: 0.8; }
+      50% { filter: brightness(1.4); opacity: 1; }
+      100% { filter: brightness(1); opacity: 0.8; }
     }
 
     table {
@@ -153,6 +166,7 @@
       Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
     </p>
   </header>
+
   <main class="max-w-5xl mx-auto space-y-12 relative z-10">
     <section class="glass animate-section">
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
@@ -267,7 +281,7 @@
     let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
     let auditsEnabled = false;
 
-    // --- Frequency Label Update ---
+    // --- Frequency Label ---
     const freqSlider = document.getElementById("auditFreq");
     const freqLabel = document.getElementById("freqLabel");
     freqSlider.addEventListener("input", () => {
@@ -305,7 +319,7 @@
       return Math.round(num * (multi[m[2]] || 1));
     };
 
-    // --- Parse Input Data ---
+    // --- Parse Input ---
     const parseInput = (r) =>
       r.split(/\r?\n/)
         .map(l => l.trim())
@@ -332,8 +346,8 @@
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
         const variation = 0.15;
-
         if (i === 0) output.push({ ts: startTS, c: s.c });
+
         let acc = 0;
         let increments = Array.from({ length: steps }, () =>
           avgGain * (1 + (Math.random() - 0.5) * variation * 2)
@@ -353,7 +367,7 @@
       return data.map(r => ({ ...r }));
     }
 
-    // --- Smooth MrBeast-Style Audits ---
+    // --- Smooth Audits ---
     function applyAudits(data) {
       const intensity = parseFloat(document.getElementById("auditStrength").value);
       const freq = parseFloat(document.getElementById("auditFreq").value);
@@ -364,7 +378,7 @@
           const direction = Math.random() < 0.5 ? -1 : 1;
           drift += direction * out[i].c * intensity * 0.0004 * (Math.random() * 0.8 + 0.4);
         }
-        drift *= 0.92;
+        drift *= 0.92; // smoothing factor
         out[i].c = Math.max(0, out[i].c + Math.round(drift));
       }
       return out;
@@ -385,7 +399,7 @@
       tbl.innerHTML = h + "</tbody>";
     }
 
-    // --- Render Charts ---
+    // --- Charts ---
     function renderCharts(data) {
       const labels = data.map(r => formatDate(r.ts));
       const counts = data.map(r => r.c);
@@ -406,7 +420,7 @@
       });
     }
 
-    // --- Toast + Copy Helpers ---
+    // --- Toast ---
     const showToast = () => {
       const t = document.getElementById("toast");
       t.classList.add("show");
@@ -426,7 +440,7 @@
       URL.revokeObjectURL(a.href);
     }
 
-    // --- Dark / Light Mode Toggle ---
+    // --- Mode Toggle ---
     document.getElementById("modeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
