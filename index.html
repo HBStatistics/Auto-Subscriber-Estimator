@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>HB Statistics • Subscriber Growth Tracker</title>
-  <link rel="icon" type="image/png" href="https://images.socialblade.com/256x,q75/https://yt3.ggpht.com/veDA1FfRTsN5P5U97lgW9TRP4u0FnGRQIphD1DQs5TRvoHqZHU4xizu0UxIx5GMdnvKa8mkxQzw=s192-c-k-c0x00ffffff-no-rj">
+  <link rel="icon" type="image/png"
+    href="https://images.socialblade.com/256x,q75/https://yt3.ggpht.com/veDA1FfRTsN5P5U97lgW9TRP4u0FnGRQIphD1DQs5TRvoHqZHU4xizu0UxIx5GMdnvKa8mkxQzw=s192-c-k-c0x00ffffff-no-rj">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -13,9 +14,6 @@
       font-family: 'Poppins', system-ui, sans-serif;
       min-height: 100vh;
       transition: background 0.6s ease, color 0.6s ease;
-    }
-
-    body.dark {
       background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
       background-size: 200% 200%;
       animation: gradientShift 15s ease infinite;
@@ -33,21 +31,10 @@
       100% { background-position: 0% 50%; }
     }
 
-    .shape {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.4;
-      animation: floaty 20s ease-in-out infinite;
-    }
-
-    .shape1 { width: 300px; height: 300px; top: 10%; left: 10%; background: #6366f1; }
-    .shape2 { width: 400px; height: 400px; bottom: 15%; right: 15%; background: #22d3ee; animation-delay: -10s; }
-
-    @keyframes floaty {
-      0%,100% { transform: translateY(0px) translateX(0px); }
-      50% { transform: translateY(-40px) translateX(30px); }
-    }
+    .shape { position:absolute; border-radius:50%; filter:blur(100px); opacity:0.4; animation:floaty 20s ease-in-out infinite; }
+    .shape1 { width:300px; height:300px; top:10%; left:10%; background:#6366f1; }
+    .shape2 { width:400px; height:400px; bottom:15%; right:15%; background:#22d3ee; animation-delay:-10s; }
+    @keyframes floaty { 0%,100%{transform:translateY(0)translateX(0)}50%{transform:translateY(-40px)translateX(30px)} }
 
     .glass {
       background: rgba(255,255,255,0.08);
@@ -58,93 +45,54 @@
       position: relative;
       z-index: 1;
     }
-
-    body.light .glass {
-      background: rgba(255,255,255,0.85);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    }
+    body.light .glass { background:rgba(255,255,255,0.85);box-shadow:0 8px 24px rgba(0,0,0,0.1); }
 
     #toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
+      position: fixed; bottom: 2rem; left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.85);
-      color: #4ade80;
-      padding: 0.8rem 1.6rem;
-      border-radius: 9999px;
-      font-weight: 600;
-      font-size: 1rem;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      z-index: 9999;
+      background: rgba(0,0,0,0.85); color:#4ade80;
+      padding:0.8rem 1.6rem;border-radius:9999px;
+      font-weight:600;font-size:1rem;opacity:0;
+      pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:9999;
     }
+    #toast.show { opacity:1;transform:translateX(-50%) translateY(-5px); }
 
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+    .underline-glow{position:relative;display:inline-block;}
+    .underline-glow::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;
+      background:linear-gradient(to right,#22d3ee,#4ade80,#818cf8);border-radius:3px;animation:glow 3s linear infinite;}
+    @keyframes glow{0%{opacity:.8}50%{opacity:1}100%{opacity:.8}}
 
-    /* === Underline Glow Fix === */
-    .underline-glow {
-      position: relative;
-      display: inline-block;
-    }
+    table{border-collapse:separate;border-spacing:0;width:100%;border-radius:1rem;overflow:hidden;
+      backdrop-filter:blur(10px);background:rgba(255,255,255,0.05);box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+    thead{position:sticky;top:0;background:rgba(255,255,255,0.15);backdrop-filter:blur(16px);
+      color:#e0f2fe;text-transform:uppercase;letter-spacing:.05em;font-weight:700;font-size:.85rem;
+      border-bottom:2px solid rgba(255,255,255,0.2);}
+    td{padding:.9rem 1rem;font-size:.95rem;border-bottom:1px solid rgba(255,255,255,0.1);}
+    .text-emerald-300{color:#4ade80;font-weight:600;}
+    .text-red-400{color:#f87171;font-weight:600;}
+    .fancy-btn{transition:transform .25s ease,box-shadow .3s ease;}
+    .fancy-btn:hover{transform:translateY(-2px)scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+    .animate-section{animation:fadeUp .8s ease forwards;opacity:0;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 
-    .underline-glow::after {
-      content: "";
+    .popup {
       position: absolute;
-      left: 0;
-      bottom: -6px;
-      width: 100%;
-      height: 3px;
-      background: linear-gradient(to right, #22d3ee, #4ade80, #818cf8);
-      border-radius: 3px;
-      animation: glow 3s linear infinite;
-    }
-
-    @keyframes glow {
-      0% { filter: brightness(1); opacity: 0.8; }
-      50% { filter: brightness(1.4); opacity: 1; }
-      100% { filter: brightness(1); opacity: 0.8; }
-    }
-
-    table {
-      border-collapse: separate;
-      border-spacing: 0;
-      width: 100%;
-      border-radius: 1rem;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      background: rgba(255,255,255,0.05);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    thead {
-      position: sticky;
-      top: 0;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(16px);
-      color: #e0f2fe;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-weight: 700;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
       font-size: 0.85rem;
-      border-bottom: 2px solid rgba(255,255,255,0.2);
+      padding: 10px 14px;
+      border-radius: 12px;
+      width: 280px;
+      margin-top: 8px;
+      display: none;
+      z-index: 999;
+      animation: fadeIn .3s ease forwards;
     }
 
-    td {
-      padding: 0.9rem 1rem;
-      font-size: 0.95rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
-    .text-emerald-300 { color: #4ade80; font-weight: 600; }
-    .text-red-400 { color: #f87171; font-weight: 600; }
-
-    .fancy-btn { transition: transform 0.25s ease, box-shadow 0.3s ease; }
-    .fancy-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-
-    .animate-section { animation: fadeUp 0.8s ease forwards; opacity: 0; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 
@@ -155,7 +103,8 @@
   </div>
 
   <div class="flex justify-end mb-4 relative z-10">
-    <button id="modeToggle" class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
+    <button id="modeToggle"
+      class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
       🌙 Dark Mode
     </button>
   </div>
@@ -172,9 +121,9 @@
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
       <textarea id="dataInput" rows="6"
         class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
-        placeholder="2025-01-01 10:30:00,1.2M
+        placeholder="2025-01-01 10:30:00,1200000
 2025-01-02 12:15:00,1350000
-2025-01-03 14:45:00,1.4M"></textarea>
+2025-01-03 14:45:00,1400000"></textarea>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
         <div>
@@ -203,6 +152,14 @@
             <option value="America/Los_Angeles">Pacific (PST)</option>
           </select>
         </div>
+
+        <!-- 🔹 New Estimation Strength Slider -->
+        <div class="md:col-span-3">
+          <label for="estimationStrength" class="font-semibold">Estimation Strength:</label>
+          <input id="estimationStrength" type="range" min="0" max="100" step="1" value="50"
+            class="w-full accent-indigo-400 mt-1">
+          <span id="estimationStrengthLabel" class="ml-1 font-semibold text-indigo-300">50%</span>
+        </div>
       </div>
 
       <div class="flex flex-wrap gap-3 mt-4 items-center">
@@ -210,22 +167,36 @@
           class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
           🔍 Enable Audits
         </button>
+        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+        <div id="auditInfo" class="popup">
+          Adds small, human-like subscriber fluctuations. Adjust “Intensity” for strength and “Frequency” for occurrence rate.
+        </div>
 
         <label for="auditStrength" class="font-semibold ml-2">Intensity:</label>
-        <select id="auditStrength"
-          class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+        <select id="auditStrength" class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
           <option value="0.05">Calm</option>
           <option value="0.12" selected>Moderate</option>
           <option value="0.25">Volatile</option>
         </select>
 
         <label for="auditFreq" class="font-semibold ml-4">Frequency:</label>
-        <input id="auditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04"
-          class="w-32 accent-emerald-400">
+        <input id="auditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04" class="w-32 accent-emerald-400">
         <span id="freqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+
+        <button id="randomToggle"
+          class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
+          🎲 Enable Natural Randomization
+        </button>
+        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+        <div id="randomInfo" class="popup">
+          Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
+        </div>
+
+        <label for="randStrength" class="font-semibold ml-2">Strength:</label>
+        <input id="randStrength" type="range" min="0.005" max="0.10" step="0.005" value="0.03" class="w-32 accent-sky-400">
+        <span id="randStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
       </div>
 
-      <!-- Beta Notice -->
       <div class="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
         ⚠️ <span class="text-white font-bold">Audits Feature (Beta)</span><br>
         This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
@@ -237,11 +208,14 @@
         🚀 Estimate Growth
       </button>
     </section>
-    <!-- ===== RESULTS SECTION ===== -->
+
     <section id="resultsSection" class="hidden glass space-y-8 animate-section">
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-semibold">2. Estimates</h2>
-        <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">✅ Audits Active</span>
+        <div class="flex flex-col text-right">
+          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">✅ Audits Active</span>
+          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">✅ Randomization Active</span>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -260,35 +234,49 @@
       </div>
 
       <div class="flex flex-wrap gap-4">
-        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">
-          ⬇ Download CSV
-        </button>
-        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">
-          📋 Copy Gains (Vertical)
-        </button>
-        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">
-          📋 Copy Gains (Horizontal)
-        </button>
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇ Download CSV</button>
+        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
+        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
       </div>
     </section>
   </main>
 
   <div id="toast">Copied!</div>
 
-  <!-- ===== SCRIPT START ===== -->
   <script>
     const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
-    let currentMode = "dark", est = [], subsChart = null, gainChart = null, gainsArr = [];
-    let auditsEnabled = false;
+    let currentMode = "dark";
+    let est = [], subsChart = null, gainChart = null, gainsArr = [];
+    let auditsEnabled = false, randomizationEnabled = false;
+    let estStrength = 0.5;
 
-    // --- Frequency Label ---
-    const freqSlider = document.getElementById("auditFreq");
-    const freqLabel = document.getElementById("freqLabel");
-    freqSlider.addEventListener("input", () => {
-      freqLabel.textContent = Math.round(freqSlider.value * 100) + "%";
+    const estSlider = document.getElementById("estimationStrength");
+    const estLabel = document.getElementById("estimationStrengthLabel");
+    estSlider.addEventListener("input", () => {
+      estStrength = estSlider.value / 100;
+      estLabel.textContent = Math.round(estStrength * 100) + "%";
     });
 
-    // --- Date Formatting ---
+    const togglePopup = (btnId, popupId) => {
+      const btn = document.getElementById(btnId);
+      const popup = document.getElementById(popupId);
+      if (!btn || !popup) return;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === "block" ? "none" : "block";
+      });
+    };
+    togglePopup("auditInfoBtn", "auditInfo");
+    togglePopup("randomInfoBtn", "randomInfo");
+    document.addEventListener("click", () => document.querySelectorAll(".popup").forEach(p => p.style.display = "none"));
+
+    const freqSlider = document.getElementById("auditFreq");
+    const freqLabel = document.getElementById("freqLabel");
+    const randSlider = document.getElementById("randStrength");
+    const randLabel = document.getElementById("randStrengthLabel");
+    freqSlider.addEventListener("input", () => freqLabel.textContent = Math.round(freqSlider.value * 100) + "%");
+    randSlider.addEventListener("input", () => randLabel.textContent = Math.round(randSlider.value * 100) + "%");
+
     const formatDate = (ts) => {
       const tz = document.getElementById("timeZone").value;
       const tf = document.getElementById("timeFormat").value;
@@ -300,26 +288,32 @@
       }).format(new Date(ts));
     };
 
-    // --- Audit Toggle ---
-    document.getElementById("auditToggle").addEventListener("click", (e) => {
+    document.getElementById("auditToggle").addEventListener("click", e => {
       auditsEnabled = !auditsEnabled;
       document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
       e.target.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
-      e.target.classList.toggle("from-emerald-400", auditsEnabled);
-      e.target.classList.toggle("from-rose-400", !auditsEnabled);
     });
 
-    // --- Parse Count ---
+    document.getElementById("randomToggle").addEventListener("click", e => {
+      randomizationEnabled = !randomizationEnabled;
+      document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
+      e.target.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+    });
+
+    /* === Parse Count === */
     const parseCount = (r) => {
       const c = r.replace(/,/g, "").trim().toLowerCase();
       const m = c.match(/^([\d.]+)([kmb]?)$/);
       if (!m) return NaN;
       const num = parseFloat(m[1]);
+      const suffix = m[2];
+      if (randomizationEnabled && suffix)
+        throw new Error("Abbreviated counts (K/M/B) are disabled while Randomization is active.");
       const multi = { k: 1e3, m: 1e6, b: 1e9 };
-      return Math.round(num * (multi[m[2]] || 1));
+      return Math.round(num * (multi[suffix] || 1));
     };
 
-    // --- Parse Input ---
+    /* === Parse Input === */
     const parseInput = (r) =>
       r.split(/\r?\n/)
         .map(l => l.trim())
@@ -334,18 +328,29 @@
         })
         .sort((a, b) => a.ts - b.ts);
 
-    // --- Interpolation ---
+    /* === Interpolation (with Strength + Midnight Alignment) === */
     function interpolate(points, mode) {
       const step = units[mode];
       const output = [];
+
       for (let i = 0; i < points.length - 1; i++) {
         const s = points[i], e = points[i + 1];
-        const startTS = (mode === "day") ? new Date(s.ts).setHours(0, 0, 0, 0) : s.ts;
+        let startTS = s.ts;
         const diff = e.ts - s.ts;
         const steps = Math.max(1, Math.floor(diff / step));
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
-        const variation = 0.15;
+
+        // 🎚️ Strength-based variation
+        const variation = 0.02 + estStrength * 0.25;
+
+        // 🕛 Align daily mode to midnight boundaries
+        if (mode === "day") {
+          const startDate = new Date(s.ts);
+          startDate.setHours(0, 0, 0, 0);
+          startTS = startDate.getTime();
+        }
+
         if (i === 0) output.push({ ts: startTS, c: s.c });
 
         let acc = 0;
@@ -363,11 +368,7 @@
       return output;
     }
 
-    function smoothPlateaus(data) {
-      return data.map(r => ({ ...r }));
-    }
-
-    // --- Smooth Audits ---
+    /* === Audits === */
     function applyAudits(data) {
       const intensity = parseFloat(document.getElementById("auditStrength").value);
       const freq = parseFloat(document.getElementById("auditFreq").value);
@@ -375,16 +376,38 @@
       let drift = 0;
       for (let i = 1; i < out.length; i++) {
         if (Math.random() < freq) {
-          const direction = Math.random() < 0.5 ? -1 : 1;
-          drift += direction * out[i].c * intensity * 0.0004 * (Math.random() * 0.8 + 0.4);
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          drift += dir * out[i].c * intensity * 0.0004 * (Math.random() * 0.8 + 0.4);
         }
-        drift *= 0.92; // smoothing factor
+        drift *= 0.92;
         out[i].c = Math.max(0, out[i].c + Math.round(drift));
       }
       return out;
     }
 
-    // --- Render Table ---
+    /* === Natural Randomization (Never Below API) === */
+    function applyNaturalRandomization(data, original) {
+      const intensity = parseFloat(document.getElementById("randStrength").value);
+      const out = [];
+      let apiIndex = 0;
+
+      for (let i = 0; i < data.length; i++) {
+        if (apiIndex < original.length - 1 && data[i].ts >= original[apiIndex + 1].ts)
+          apiIndex++;
+        const apiBaseline = original[apiIndex].c;
+        const prev = i > 0 ? data[i - 1].c : apiBaseline;
+        const curr = data[i].c;
+        const growth = Math.abs(curr - prev);
+        const range = Math.max(300, growth * intensity);
+        const offset = 150 + Math.random() * 600;
+        const variation = Math.abs((Math.random() - 0.5) * range * 2);
+        const newVal = Math.max(curr + offset, apiBaseline + variation);
+        out.push({ ...data[i], c: Math.round(newVal) });
+      }
+      return out;
+    }
+
+    /* === Table Rendering === */
     function renderTable(data) {
       const tbl = document.getElementById("resultTable");
       let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
@@ -399,20 +422,18 @@
       tbl.innerHTML = h + "</tbody>";
     }
 
-    // --- Charts ---
+    /* === Charts === */
     function renderCharts(data) {
       const labels = data.map(r => formatDate(r.ts));
       const counts = data.map(r => r.c);
       subsChart?.destroy();
       gainChart?.destroy();
       const txt = currentMode === "dark" ? "#fff" : "#000";
-
       subsChart = new Chart(document.getElementById("subsChart"), {
         type: "line",
         data: { labels, datasets: [{ label: "Subscribers", data: counts, borderColor: "#4ade80", tension: 0.35, pointRadius: 0 }] },
         options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
       });
-
       gainChart = new Chart(document.getElementById("gainChart"), {
         type: "line",
         data: { labels: labels.slice(1), datasets: [{ label: "Gain", data: gainsArr, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0 }] },
@@ -420,7 +441,7 @@
       });
     }
 
-    // --- Toast ---
+    /* === Copy + CSV === */
     const showToast = () => {
       const t = document.getElementById("toast");
       t.classList.add("show");
@@ -429,26 +450,26 @@
     };
     const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
 
-    // --- Download CSV ---
     function downloadCSV(data) {
-      const csv = [["Date/Time","Subscribers","Gain"], ...data.map((r,i)=>[formatDate(r.ts),r.c,i? r.c-data[i-1].c:0])].map(r=>r.join(",")).join("\n");
-      const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);
-      a.download="subscriber-estimates.csv";
+      const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts), r.c, i ? r.c - data[i - 1].c : 0])]
+        .map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "subscriber-estimates.csv";
       a.click();
       URL.revokeObjectURL(a.href);
     }
 
-    // --- Mode Toggle ---
+    /* === Mode Toggle === */
     document.getElementById("modeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
       currentMode = document.body.classList.contains("dark") ? "dark" : "light";
-      renderCharts(est);
+      if (est.length) renderCharts(est);
     });
 
-    // --- Main Execution ---
+    /* === Main Execution === */
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("estimateBtn").addEventListener("click", () => {
         const val = document.getElementById("dataInput").value;
@@ -462,8 +483,8 @@
 
         try {
           let estd = interpolate(pts, mode);
-          estd = smoothPlateaus(estd);
           if (auditsEnabled) estd = applyAudits(estd);
+          if (randomizationEnabled) estd = applyNaturalRandomization(estd, pts);
           est = estd;
           renderTable(estd);
           renderCharts(estd);
