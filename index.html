@@ -561,7 +561,6 @@
         const steps = Math.max(1, Math.floor(diff / step));
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
-        const allowNegativeSteps = diff >= 60 * 86400000;
         const avgStepsForSpecial = mode === "day"
           ? Math.max(1, Math.round((new Date(e.ts).setHours(0, 0, 0, 0) - new Date(s.ts).setHours(0, 0, 0, 0)) / step))
           : steps;
@@ -640,17 +639,11 @@
             increments[d] = (increments[d] >= 0 ? 1 : -1) * floor;
           }
         }
-        if (!allowNegativeSteps && totalGain >= 0) {
-          increments = increments.map(g => Math.max(0, g));
-        }
         let adjustedSum = increments.reduce((a, b) => a + b, 0);
         if (Math.abs(adjustedSum) > 1e-6) {
           increments = increments.map(g => (g * totalGain) / adjustedSum);
         } else {
           increments = increments.map(() => avgStepGain);
-        }
-        if (!allowNegativeSteps && totalGain >= 0) {
-          increments = increments.map(g => Math.max(0, g));
         }
         if (!isSixtySixKAvg && avgStepGain > 40000 && totalGain >= 0 && !allowNegativeSteps) {
           const minStep = avgStepGain * 0.65;
@@ -865,4 +858,5 @@
   </script>
 </body>
 </html>
+
 
