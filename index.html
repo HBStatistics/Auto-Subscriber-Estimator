@@ -321,6 +321,7 @@
   </main>
 
   <div id="toast">Copied!</div>
+  <div class="text-center text-sm text-white/60 mt-10 relative z-10">© HB Statistics 2026</div>
 
   <script>
     const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
@@ -358,13 +359,111 @@
 
     const formatDate = (ts) => {
       const tz = document.getElementById("timeZone").value;
-      const tf = document.getElementById("timeFormat").value;
-      return new Intl.DateTimeFormat(undefined, {
+      const mode = document.getElementById("intervalMode").value;
+      const isDaily = mode === "day";
+      return new Intl.DateTimeFormat("en-US", {
         timeZone: tz === "local" ? undefined : tz,
-        hour12: tf === "12",
-        year: "numeric", month: "short", day: "2-digit",
-        hour: "2-digit", minute: "2-digit", second: "2-digit"
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        ...(isDaily
+          ? {}
+          : {
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            })
       }).format(new Date(ts));
+    };
+
+    const timezoneFormatterCache = new Map();
+    const getZoneTimeOfDay = (ts, tz) => {
+      const key = tz === "local" ? "local" : tz;
+      if (!timezoneFormatterCache.has(key)) {
+        timezoneFormatterCache.set(key,
+          new Intl.DateTimeFormat(undefined, {
+            timeZone: tz === "local" ? undefined : tz,
+            hour12: false,
+            hourCycle: "h23",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          })
+        );
+      }
+      const formatter = timezoneFormatterCache.get(key);
+      const date = new Date(ts);
+      const parts = formatter.formatToParts(date);
+      let hour = 0, minute = 0, second = 0;
+      for (const part of parts) {
+        if (part.type === "hour") hour = Number(part.value);
+        if (part.type === "minute") minute = Number(part.value);
+        if (part.type === "second") second = Number(part.value);
+      }
+      return { hour, minute, second, millisecond: date.getMilliseconds() };
+    };
+
+    const excelFormatterCache = new Map();
+    const getExcelTimezoneLabel = () => {
+      const tz = document.getElementById("timeZone").value;
+      return tz === "local" ? "System Local" : tz;
+    };
+    const formatForCsvExport = (ts) => {
+      const tz = document.getElementById("timeZone").value;
+      const key = tz === "local" ? "local" : tz;
+      const mode = document.getElementById("intervalMode").value;
+      const isDaily = mode === "day";
+      const cacheKey = `${key}|${mode}`;
+      if (!excelFormatterCache.has(cacheKey)) {
+        excelFormatterCache.set(cacheKey,
+          new Intl.DateTimeFormat("en-US", {
+            timeZone: tz === "local" ? undefined : tz,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            ...(isDaily
+              ? {}
+              : {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false
+                })
+          })
+        );
+      }
+      const formatter = excelFormatterCache.get(cacheKey);
+      const parts = formatter.formatToParts(new Date(ts));
+      const values = {};
+      for (const part of parts) {
+        if (part.type !== "literal") values[part.type] = part.value;
+      }
+      const tzLabel = getExcelTimezoneLabel();
+      if (isDaily) return `${values.month}/${values.day}/${values.year} (${tzLabel})`;
+      return `${values.month}/${values.day}/${values.year} ${values.hour}:${values.minute}:${values.second} (${tzLabel})`;
+    };
+    const excelSafeDateFormatterCache = new Map();
+    const formatForExcelExport = (ts) => {
+      const tz = document.getElementById("timeZone").value;
+      const key = tz === "local" ? "local" : tz;
+      if (!excelSafeDateFormatterCache.has(key)) {
+        excelSafeDateFormatterCache.set(key,
+          new Intl.DateTimeFormat("en-CA", {
+            timeZone: tz === "local" ? undefined : tz,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+          })
+        );
+      }
+      const formatter = excelSafeDateFormatterCache.get(key);
+      const parts = formatter.formatToParts(new Date(ts));
+      const values = {};
+      for (const part of parts) {
+        if (part.type !== "literal") values[part.type] = part.value;
+      }
+      return `'${values.year}-${values.month}-${values.day}`;
     };
 
     document.getElementById("auditToggle").addEventListener("click", e => {
@@ -393,23 +492,66 @@
     };
 
     /* === Parse Input === */
-    const parseInput = (r) =>
-      r.split(/\r?\n/)
+    const parseInput = (r) => {
+      const normalized = r.replace(/\u00a0/g, " ");
+      const pairRegex = /(\d{1,4}[-/]\d{1,2}[-/]\d{1,4}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?)?)\s*,?\s*([0-9][0-9,\.]*[kmbKMB]?)/g;
+      const matches = [];
+      let m;
+      while ((m = pairRegex.exec(normalized)) !== null) {
+        matches.push({ date: m[1], count: m[2] });
+      }
+
+      if (matches.length >= 2) {
+        return matches
+          .map(p => {
+            const ts = Date.parse(p.date.trim());
+            if (isNaN(ts)) throw new Error(`Invalid date/time: ${p.date}`);
+            const count = parseCount(p.count.trim());
+            if (isNaN(count)) throw new Error(`Invalid count: ${p.count}`);
+            return { ts, c: count };
+          })
+          .sort((a, b) => a.ts - b.ts);
+      }
+
+      const fallback = normalized
+        .replace(/[→⇒➜➔➡]+/g, "\n")
+        .replace(/-+>/g, "\n")
+        .replace(/[|;]+/g, "\n");
+
+      return fallback
+        .split(/\r?\n/)
         .map(l => l.trim())
         .filter(Boolean)
         .map(l => {
-          const [d, v] = l.split(",");
-          const ts = Date.parse(d.trim());
+          let d = "";
+          let v = "";
+          const commaIndex = l.lastIndexOf(",");
+          if (commaIndex !== -1) {
+            d = l.slice(0, commaIndex).trim();
+            v = l.slice(commaIndex + 1).trim();
+          } else {
+            const match = l.match(/^(.+?)\s+([0-9][0-9,\.]*[kmbKMB]?)$/);
+            if (match) {
+              d = match[1].trim();
+              v = match[2].trim();
+            } else {
+              throw new Error(`Invalid row: ${l}`);
+            }
+          }
+
+          const ts = Date.parse(d);
           if (isNaN(ts)) throw new Error(`Invalid date/time: ${l}`);
-          const count = parseCount(v.trim());
+          const count = parseCount(v);
           if (isNaN(count)) throw new Error(`Invalid count: ${l}`);
           return { ts, c: count };
         })
         .sort((a, b) => a.ts - b.ts);
+    };
 
     /* === Interpolation (with Strength + Midnight Alignment) === */
     function interpolate(points, mode) {
       const step = units[mode];
+      const tzValue = document.getElementById("timeZone").value;
       const output = [];
 
       for (let i = 0; i < points.length - 1; i++) {
@@ -419,9 +561,15 @@
         const steps = Math.max(1, Math.floor(diff / step));
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
+        const allowNegativeSteps = diff >= 60 * 86400000;
+        const avgStepsForSpecial = mode === "day"
+          ? Math.max(1, Math.round((new Date(e.ts).setHours(0, 0, 0, 0) - new Date(s.ts).setHours(0, 0, 0, 0)) / step))
+          : steps;
+        const avgGainForSpecial = totalGain / avgStepsForSpecial;
+        const isSixtySixKAvg = avgGainForSpecial > 0 && Math.round(avgGainForSpecial) === 66667;
 
         // 🎚️ Strength-based variation
-        const variation = 0.02 + estStrength * 0.25;
+        const variation = 0.14 + estStrength * 0.7;
 
         // 🕛 Align daily mode to midnight boundaries
         if (mode === "day") {
@@ -433,11 +581,125 @@
         if (i === 0) output.push({ ts: startTS, c: s.c });
 
         let acc = 0;
-        let increments = Array.from({ length: steps }, () =>
-          avgGain * (1 + (Math.random() - 0.5) * variation * 2)
-        );
-        const sum = increments.reduce((a, b) => a + b, 0);
-        increments = increments.map(g => (g * totalGain) / sum);
+        let increments;
+        if (isSixtySixKAvg) {
+          increments = Array.from({ length: steps }, () => 60000 + Math.random() * 25000);
+        } else {
+          let drift = 0;
+          const driftFactor = 0.6;
+          const driftKick = avgGain * variation * 1.2;
+          const noiseKick = avgGain * variation;
+          increments = Array.from({ length: steps }, () => {
+            drift = drift * driftFactor + (Math.random() - 0.5) * driftKick * 2;
+            const noise = (Math.random() - 0.5) * noiseKick * 2;
+            return avgGain + drift + noise;
+          });
+        }
+        const clampPct = Math.min(Math.max(0.4, 0.65 - estStrength * 0.05), 0.75);
+        const avgStepGain = totalGain / Math.max(1, steps);
+        const margin = Math.abs(avgStepGain * clampPct);
+        const minAllowed = avgStepGain - margin;
+        const maxAllowed = avgStepGain + margin;
+        if (!isSixtySixKAvg) {
+          increments = increments
+            .map(g => Math.min(maxAllowed, Math.max(minAllowed, g)));
+        }
+        const taperThreshold = 50000;
+        if (!isSixtySixKAvg && avgStepGain > taperThreshold && steps > 2) {
+          const minRatio = 0.55;
+          for (let d = 1; d < increments.length; d++) {
+            const floor = increments[d - 1] * minRatio;
+            if (increments[d] < floor) increments[d] = floor;
+          }
+        }
+        const avgMag = Math.max(1, Math.abs(avgStepGain));
+        let minRatio = 0.4 - estStrength * 0.05;
+        const maxRatio = 1.85 + estStrength * 0.25;
+        if (avgStepGain > 50000) minRatio = Math.max(minRatio, 0.7);
+        if (steps > 1 && avgStepGain > 40000) minRatio = Math.max(minRatio, 0.8);
+        const repeatThreshold = Math.max(1, avgMag * 0.03);
+        const desiredSpread = avgMag > 15000 ? avgMag * 0.2 : avgMag * 0.35;
+        for (let d = 1; d < increments.length; d++) {
+          const prev = increments[d - 1];
+          if (Math.abs(prev) > 0) {
+            const sign = prev >= 0 ? 1 : -1;
+            const absPrev = Math.abs(prev);
+            const lower = absPrev * minRatio;
+            const upper = absPrev * maxRatio;
+            const bounded = Math.min(upper, Math.max(lower, Math.abs(increments[d])));
+            increments[d] = sign * bounded;
+          }
+          if (Math.abs(increments[d] - increments[d - 1]) < repeatThreshold) {
+            increments[d] += (Math.random() < 0.5 ? -1 : 1) * repeatThreshold;
+          }
+          if (Math.abs(increments[d] - increments[d - 1]) < desiredSpread) {
+            increments[d] += (Math.random() < 0.5 ? -1 : 1) * desiredSpread * 0.6;
+          }
+          const floor = Math.abs(increments[d - 1]) * minRatio;
+          if (Math.abs(increments[d]) < floor) {
+            increments[d] = (increments[d] >= 0 ? 1 : -1) * floor;
+          }
+        }
+        if (!allowNegativeSteps && totalGain >= 0) {
+          increments = increments.map(g => Math.max(0, g));
+        }
+        let adjustedSum = increments.reduce((a, b) => a + b, 0);
+        if (Math.abs(adjustedSum) > 1e-6) {
+          increments = increments.map(g => (g * totalGain) / adjustedSum);
+        } else {
+          increments = increments.map(() => avgStepGain);
+        }
+        if (!allowNegativeSteps && totalGain >= 0) {
+          increments = increments.map(g => Math.max(0, g));
+        }
+        if (!isSixtySixKAvg && avgStepGain > 40000 && totalGain >= 0 && !allowNegativeSteps) {
+          const minStep = avgStepGain * 0.65;
+          const maxStep = avgStepGain * 1.4;
+          increments = increments.map(g => Math.min(maxStep, Math.max(minStep, g)));
+          let diffRemaining = totalGain - increments.reduce((a, b) => a + b, 0);
+          const maxLoops = 6;
+          for (let loop = 0; loop < maxLoops && Math.abs(diffRemaining) > 0.5; loop++) {
+            for (let d = 0; d < increments.length && Math.abs(diffRemaining) > 0.5; d++) {
+              if (diffRemaining > 0) {
+                const room = maxStep - increments[d];
+                if (room <= 0) continue;
+                const add = Math.min(room, diffRemaining / (increments.length - d));
+                increments[d] += add;
+                diffRemaining -= add;
+              } else {
+                const room = increments[d] - minStep;
+                if (room <= 0) continue;
+                const sub = Math.min(room, Math.abs(diffRemaining) / (increments.length - d));
+                increments[d] -= sub;
+                diffRemaining += sub;
+              }
+            }
+          }
+        }
+        if (isSixtySixKAvg) {
+          const minGain = 60000;
+          const maxGain = 85000;
+          increments = increments.map(g => Math.min(maxGain, Math.max(minGain, g)));
+          let diffRemaining = totalGain - increments.reduce((a, b) => a + b, 0);
+          const maxLoops = 6;
+          for (let loop = 0; loop < maxLoops && Math.abs(diffRemaining) > 0.5; loop++) {
+            for (let d = 0; d < increments.length && Math.abs(diffRemaining) > 0.5; d++) {
+              if (diffRemaining > 0) {
+                const room = maxGain - increments[d];
+                if (room <= 0) continue;
+                const add = Math.min(room, diffRemaining / (increments.length - d));
+                increments[d] += add;
+                diffRemaining -= add;
+              } else {
+                const room = increments[d] - minGain;
+                if (room <= 0) continue;
+                const sub = Math.min(room, Math.abs(diffRemaining) / (increments.length - d));
+                increments[d] -= sub;
+                diffRemaining += sub;
+              }
+            }
+          }
+        }
 
         for (let d = 0; d < steps; d++) {
           acc += increments[d];
@@ -530,7 +792,10 @@
     const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
 
     function downloadCSV(data) {
-      const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts), r.c, i ? r.c - data[i - 1].c : 0])]
+      const csv = [
+        ["Date/Time", "Subscribers", "Gain"],
+        ...data.map((r, i) => [formatForCsvExport(r.ts), r.c, i ? r.c - data[i - 1].c : 0])
+      ]
         .map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const a = document.createElement("a");
@@ -573,11 +838,17 @@
 
       document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
         if (!est.length) return;
-        copyText(gainsArr.map(g => g.toLocaleString()).join("\n"));
+        const gains = est.map((r, i) =>
+          i < est.length - 1 ? String(est[i + 1].c - r.c) : ""
+        );
+        copyText(gains.join("\n"));
       });
       document.getElementById("copyGainsHorizBtn").addEventListener("click", () => {
         if (!est.length) return;
-        copyText(gainsArr.map(g => g.toLocaleString()).join("\t"));
+        const gains = est.map((r, i) =>
+          i < est.length - 1 ? String(est[i + 1].c - r.c) : ""
+        );
+        copyText(gains.join("\t"));
       });
       document.getElementById("downloadBtn").addEventListener("click", () => {
         if (est.length) downloadCSV(est);
@@ -587,7 +858,11 @@
           if (est.length) renderTable(est);
         })
       );
+      document.getElementById("intervalMode").addEventListener("change", () => {
+        if (est.length) renderTable(est);
+      });
     });
   </script>
 </body>
 </html>
+
