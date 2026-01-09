@@ -184,14 +184,14 @@
   <div class="flex justify-end mb-4 relative z-10">
     <button id="modeToggle"
       class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
-      ?? Dark Mode
+      🌙 Dark Mode
     </button>
   </div>
 
   <header class="text-center mb-12 relative z-10 animate-section">
     <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
     <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
-      Paste your milestones ? get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
+      Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
     </p>
   </header>
 
@@ -232,7 +232,7 @@
           </select>
         </div>
 
-        <!-- ?? New Estimation Strength Slider -->
+        <!-- 🔹 New Estimation Strength Slider -->
         <div class="md:col-span-3">
           <label for="estimationStrength" class="font-semibold">Estimation Strength:</label>
           <input id="estimationStrength" type="range" min="0" max="100" step="1" value="50"
@@ -244,9 +244,9 @@
       <div class="flex flex-wrap gap-3 mt-4 items-center">
         <button id="auditToggle"
           class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
-          ?? Enable Audits
+          🔍 Enable Audits
         </button>
-        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
         <div id="auditInfo" class="popup">
           Adds small, human-like subscriber fluctuations. Adjust “Intensity” for strength and “Frequency” for occurrence rate.
         </div>
@@ -264,9 +264,9 @@
 
         <button id="randomToggle"
           class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
-          ?? Enable Natural Randomization
+          🎲 Enable Natural Randomization
         </button>
-        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
         <div id="randomInfo" class="popup">
           Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
         </div>
@@ -277,14 +277,14 @@
       </div>
 
       <div class="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
-        ?? <span class="text-white font-bold">Audits Feature (Beta)</span><br>
+        ⚠️ <span class="text-white font-bold">Audits Feature (Beta)</span><br>
         This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
         please report them to the HB Statistics developer team for review and improvement.
       </div>
 
       <button id="estimateBtn"
         class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
-        ?? Estimate Growth
+        🚀 Estimate Growth
       </button>
     </section>
 
@@ -292,8 +292,8 @@
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-semibold">2. Estimates</h2>
         <div class="flex flex-col text-right">
-          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">? Audits Active</span>
-          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">? Randomization Active</span>
+          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">✅ Audits Active</span>
+          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">✅ Randomization Active</span>
         </div>
       </div>
 
@@ -313,16 +313,17 @@
       </div>
 
       <div class="flex flex-wrap gap-4">
-        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">? Download CSV</button>
-        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">?? Copy Gains (Vertical)</button>
-        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">?? Copy Gains (Horizontal)</button>
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇ Download CSV</button>
+        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
+        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
       </div>
     </section>
   </main>
 
-  <footer class="mt-12 text-center text-sm text-white/70">© HB Statistics 2026</footer>
-
   <div id="toast">Copied!</div>
+  <footer class="mt-10 text-center text-sm text-white/70">
+    © HB Statistics 2026
+  </footer>
 
   <script>
     const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
@@ -372,13 +373,13 @@
     document.getElementById("auditToggle").addEventListener("click", e => {
       auditsEnabled = !auditsEnabled;
       document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
-      e.target.textContent = auditsEnabled ? "? Audits Enabled" : "?? Enable Audits";
+      e.target.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
     });
 
     document.getElementById("randomToggle").addEventListener("click", e => {
       randomizationEnabled = !randomizationEnabled;
       document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
-      e.target.textContent = randomizationEnabled ? "? Randomization Enabled" : "?? Enable Natural Randomization";
+      e.target.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
     });
 
     /* === Parse Count === */
@@ -436,10 +437,10 @@
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
 
-        // ??? Strength-based variation
+        // 🎚️ Strength-based variation
         const variation = 0.02 + estStrength * 0.25;
 
-        // ?? Align daily mode to midnight boundaries
+        // 🕛 Align daily mode to midnight boundaries
         if (mode === "day") {
           const startDate = new Date(s.ts);
           startDate.setHours(0, 0, 0, 0);
