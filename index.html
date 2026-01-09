@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -561,6 +562,7 @@
         const steps = Math.max(1, Math.floor(diff / step));
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
+        const allowNegativeSteps = diff >= 60 * 86400000;
         const avgStepsForSpecial = mode === "day"
           ? Math.max(1, Math.round((new Date(e.ts).setHours(0, 0, 0, 0) - new Date(s.ts).setHours(0, 0, 0, 0)) / step))
           : steps;
@@ -639,11 +641,17 @@
             increments[d] = (increments[d] >= 0 ? 1 : -1) * floor;
           }
         }
+        if (!allowNegativeSteps && totalGain >= 0) {
+          increments = increments.map(g => Math.max(0, g));
+        }
         let adjustedSum = increments.reduce((a, b) => a + b, 0);
         if (Math.abs(adjustedSum) > 1e-6) {
           increments = increments.map(g => (g * totalGain) / adjustedSum);
         } else {
           increments = increments.map(() => avgStepGain);
+        }
+        if (!allowNegativeSteps && totalGain >= 0) {
+          increments = increments.map(g => Math.max(0, g));
         }
         if (!isSixtySixKAvg && avgStepGain > 40000 && totalGain >= 0 && !allowNegativeSteps) {
           const minStep = avgStepGain * 0.65;
@@ -724,18 +732,30 @@
       const intensity = parseFloat(document.getElementById("randStrength").value);
       const out = [];
       let apiIndex = 0;
+      const enforceNonDecreasing = original.every((r, i) => i == 0 || r.c >= original[i - 1].c);
 
       for (let i = 0; i < data.length; i++) {
         if (apiIndex < original.length - 1 && data[i].ts >= original[apiIndex + 1].ts)
           apiIndex++;
         const apiBaseline = original[apiIndex].c;
-        const prev = i > 0 ? data[i - 1].c : apiBaseline;
+        const prevSource = i > 0 ? data[i - 1].c : apiBaseline;
+        const prevOut = out.length ? out[out.length - 1].c : apiBaseline;
         const curr = data[i].c;
-        const growth = Math.abs(curr - prev);
+        const baseGain = curr - prevSource;
+        const growth = Math.abs(curr - prevSource);
         const range = Math.max(300, growth * intensity);
         const offset = 150 + Math.random() * 600;
         const variation = Math.abs((Math.random() - 0.5) * range * 2);
-        const newVal = Math.max(curr + offset, apiBaseline + variation);
+        let newVal = Math.max(curr + offset, apiBaseline + variation);
+        if (enforceNonDecreasing) {
+          if (baseGain > 0) {
+            const minGain = Math.max(1, Math.round(baseGain * (0.25 + 0.55 * intensity)));
+            const jitter = Math.round(Math.random() * Math.max(1, baseGain * 0.2 * intensity));
+            newVal = Math.max(newVal, prevOut + minGain + jitter);
+          } else {
+            newVal = Math.max(newVal, prevOut);
+          }
+        }
         out.push({ ...data[i], c: Math.round(newVal) });
       }
       return out;
@@ -858,5 +878,3 @@
   </script>
 </body>
 </html>
-
-
