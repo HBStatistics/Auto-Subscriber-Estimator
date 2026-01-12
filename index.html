@@ -359,13 +359,19 @@
     freqSlider.addEventListener("input", () => freqLabel.textContent = Math.round(freqSlider.value * 100) + "%");
     randSlider.addEventListener("input", () => randLabel.textContent = Math.round(randSlider.value * 100) + "%");
 
-    const formatDate = (ts) => {
+    const formatDate = (ts, mode) => {
       const tz = document.getElementById("timeZone").value;
       const tf = document.getElementById("timeFormat").value;
+      const base = {
+        year: "numeric", month: "short", day: "2-digit"
+      };
+      if (mode === "day") {
+        return new Intl.DateTimeFormat(undefined, { ...base, timeZone: "UTC" }).format(new Date(ts));
+      }
       return new Intl.DateTimeFormat(undefined, {
+        ...base,
         timeZone: tz === "local" ? undefined : tz,
         hour12: tf === "12",
-        year: "numeric", month: "short", day: "2-digit",
         hour: "2-digit", minute: "2-digit", second: "2-digit"
       }).format(new Date(ts));
     };
@@ -396,7 +402,26 @@
     };
 
     /* === Parse Input === */
-    const parseInput = (r) => {
+    const parseInput = (r, mode) => {
+      const parseTimestamp = (raw) => {
+        const s = raw.trim();
+        const isoDateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoDateOnly) {
+          const y = Number(isoDateOnly[1]);
+          const m = Number(isoDateOnly[2]) - 1;
+          const d = Number(isoDateOnly[3]);
+          return mode === "day" ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+        }
+        const usDateOnly = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (usDateOnly) {
+          const m = Number(usDateOnly[1]) - 1;
+          const d = Number(usDateOnly[2]);
+          const y = Number(usDateOnly[3]);
+          return mode === "day" ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+        }
+        return Date.parse(s);
+      };
+
       const splitEntry = (line) => {
         const commaIndex = line.lastIndexOf(",");
         if (commaIndex !== -1) {
@@ -415,7 +440,7 @@
         .filter(Boolean)
         .map(l => {
           const [d, v] = splitEntry(l);
-          const ts = Date.parse(d.trim());
+          const ts = parseTimestamp(d);
           if (isNaN(ts)) throw new Error(`Invalid date/time: ${l}`);
           const count = parseCount(v.trim());
           if (isNaN(count)) throw new Error(`Invalid count: ${l}`);
@@ -443,8 +468,11 @@
         // 🕛 Align daily mode to midnight boundaries
         if (mode === "day") {
           const startDate = new Date(s.ts);
-          startDate.setHours(0, 0, 0, 0);
-          startTS = startDate.getTime();
+          startTS = Date.UTC(
+            startDate.getUTCFullYear(),
+            startDate.getUTCMonth(),
+            startDate.getUTCDate()
+          );
         }
 
         if (i === 0) output.push({ ts: startTS, c: s.c });
@@ -504,7 +532,7 @@
     }
 
     /* === Table Rendering === */
-    function renderTable(data) {
+    function renderTable(data, mode) {
       const tbl = document.getElementById("resultTable");
       let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
       gainsArr = [];
@@ -512,15 +540,15 @@
         const g = i ? r.c - data[i - 1].c : 0;
         if (i) gainsArr.push(g);
         const cls = g > 0 ? "text-emerald-300" : g < 0 ? "text-red-400" : "text-white/60";
-        const sign = g > 0 ? "+" : g < 0 ? "–" : "";
-        h += `<tr><td>${formatDate(r.ts)}</td><td>${r.c.toLocaleString()}</td><td class="${cls}">${sign}${Math.abs(g).toLocaleString()}</td></tr>`;
+        const sign = g > 0 ? "+" : g < 0 ? "-" : "";
+        h += `<tr><td>${formatDate(r.ts, mode)}</td><td>${r.c.toLocaleString()}</td><td class="${cls}">${sign}${Math.abs(g).toLocaleString()}</td></tr>`;
       });
       tbl.innerHTML = h + "</tbody>";
     }
 
     /* === Charts === */
-    function renderCharts(data) {
-      const labels = data.map(r => formatDate(r.ts));
+    function renderCharts(data, mode) {
+      const labels = data.map(r => formatDate(r.ts, mode));
       const counts = data.map(r => r.c);
       subsChart?.destroy();
       gainChart?.destroy();
@@ -546,8 +574,8 @@
     };
     const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
 
-    function downloadCSV(data) {
-      const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts), r.c, i ? r.c - data[i - 1].c : 0])]
+    function downloadCSV(data, mode) {
+      const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts, mode), r.c, i ? r.c - data[i - 1].c : 0])]
         .map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const a = document.createElement("a");
@@ -573,7 +601,7 @@
         if (!val.trim()) return alert("Enter data first.");
         let pts;
         try {
-          pts = parseInput(val);
+          pts = parseInput(val, mode);
           if (pts.length < 2) return alert("Need at least two points.");
         } catch (e) { return alert(e.message); }
 
@@ -582,8 +610,8 @@
           if (auditsEnabled) estd = applyAudits(estd);
           if (randomizationEnabled) estd = applyNaturalRandomization(estd, pts);
           est = estd;
-          renderTable(estd);
-          renderCharts(estd);
+          renderTable(estd, mode);
+          renderCharts(estd, mode);
           document.getElementById("resultsSection").classList.remove("hidden");
         } catch (e) { alert(e.message); }
       });
@@ -597,11 +625,11 @@
         copyText(gainsArr.map(g => g.toLocaleString()).join("\t"));
       });
       document.getElementById("downloadBtn").addEventListener("click", () => {
-        if (est.length) downloadCSV(est);
+        if (est.length) downloadCSV(est, document.getElementById("intervalMode").value);
       });
       ["timeFormat", "timeZone"].forEach(id =>
         document.getElementById(id).addEventListener("change", () => {
-          if (est.length) renderTable(est);
+          if (est.length) renderTable(est, document.getElementById("intervalMode").value);
         })
       );
     });
