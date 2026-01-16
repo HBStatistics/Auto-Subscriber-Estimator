@@ -405,6 +405,20 @@
     const parseInput = (r, mode) => {
       const parseTimestamp = (raw) => {
         const s = raw.trim();
+        if (!s) return NaN;
+        const numeric = s.match(/^-?\d+(?:\.\d+)?$/);
+        if (numeric) {
+          const n = Number(s);
+          if (!Number.isFinite(n)) return NaN;
+          return Math.abs(n) < 1e12 ? n * 1000 : n;
+        }
+        const extendedYear = s.match(/^(-?\d{5,})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (extendedYear) {
+          const possibleEpoch = Number(extendedYear[1]);
+          if (Number.isFinite(possibleEpoch) && Math.abs(possibleEpoch) < 1e12) {
+            return possibleEpoch * 1000;
+          }
+        }
         const isoDateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         if (isoDateOnly) {
           const y = Number(isoDateOnly[1]);
@@ -636,3 +650,4 @@
   </script>
 </body>
 </html>
+
