@@ -134,13 +134,15 @@
     }
 
     textarea,
-    select {
+    select,
+    input[type="text"] {
       background: rgba(15, 23, 42, 0.85);
       color: #f8fafc;
       border: 1px solid rgba(148, 163, 184, 0.35);
     }
     body.dark textarea,
-    body.dark select {
+    body.dark select,
+    body.dark input[type="text"] {
       background: rgba(15, 23, 42, 0.95) !important;
       color: #f8fafc !important;
       border-color: rgba(148, 163, 184, 0.45) !important;
@@ -149,7 +151,8 @@
       color: rgba(248, 250, 252, 0.6);
     }
     body.light textarea,
-    body.light select {
+    body.light select,
+    body.light input[type="text"] {
       background: rgba(255, 255, 255, 0.9);
       color: #111;
       border: 1px solid rgba(15, 23, 42, 0.25);
@@ -171,6 +174,24 @@
     }
     body.dark button:active {
       transform: translateY(1px) scale(0.98);
+    }
+
+    .tab-btn {
+      padding: 0.65rem 1.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      transition: all 0.25s ease;
+      color: rgba(248, 250, 252, 0.7);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.35), rgba(74, 222, 128, 0.35));
+      color: #e2e8f0;
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
+    }
+    body.light .tab-btn { color: rgba(15, 23, 42, 0.7); }
+    body.light .tab-btn.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(59, 130, 246, 0.25));
+      color: #0f172a;
     }
   </style>
 </head>
@@ -195,8 +216,16 @@
     </p>
   </header>
 
+  <div class="flex justify-center mb-8 relative z-10">
+    <div class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 p-1">
+      <button id="tabSingle" class="tab-btn active">Single Channel</button>
+      <button id="tabCompare" class="tab-btn">Two Channel Comparison</button>
+    </div>
+  </div>
+
   <main class="max-w-5xl mx-auto space-y-12 relative z-10">
-    <section class="glass animate-section">
+    <section id="singleTab" class="space-y-12">
+      <section class="glass animate-section">
       <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
       <textarea id="dataInput" rows="6"
         class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
@@ -317,6 +346,147 @@
         <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
         <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
       </div>
+      </section>
+    </section>
+
+    <section id="compareTab" class="hidden space-y-10">
+      <div class="p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
+        🚧 <span class="text-white font-bold">Two Channel Comparison (Beta)</span><br>
+        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
+        please report them to the HB Statistics developer team for review and improvement.
+      </div>
+      <section class="glass animate-section">
+        <h2 class="text-2xl font-semibold mb-4">Two Channel Comparison</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="channelNameA" class="font-semibold">Channel A Name</label>
+            <input id="channelNameA" type="text"
+              class="mt-2 w-full px-4 py-2 rounded-xl font-semibold"
+              placeholder="Channel A">
+            <textarea id="dataInputA" rows="6"
+              class="mt-3 w-full p-4 rounded-xl text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-400 transition-all resize-y"
+              placeholder="2025-01-01 10:30:00,1200000
+2025-01-02 12:15:00,1350000
+2025-01-03 14:45:00,1400000"></textarea>
+          </div>
+          <div>
+            <label for="channelNameB" class="font-semibold">Channel B Name</label>
+            <input id="channelNameB" type="text"
+              class="mt-2 w-full px-4 py-2 rounded-xl font-semibold"
+              placeholder="Channel B">
+            <textarea id="dataInputB" rows="6"
+              class="mt-3 w-full p-4 rounded-xl text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-400 transition-all resize-y"
+              placeholder="2025-01-01 10:30:00,800000
+2025-01-02 12:15:00,900000
+2025-01-03 14:45:00,980000"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass animate-section">
+        <h2 class="text-2xl font-semibold mb-4">Comparison Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="compareIntervalMode" class="font-semibold">Estimation Interval:</label>
+            <select id="compareIntervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="day">Daily</option>
+              <option value="hour">Hourly</option>
+              <option value="minute">Minutely</option>
+              <option value="second">Secondly</option>
+            </select>
+          </div>
+          <div>
+            <label for="compareTimeFormat" class="font-semibold">Time Format:</label>
+            <select id="compareTimeFormat" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="12">12-Hour (AM/PM)</option>
+              <option value="24">24-Hour (Military)</option>
+            </select>
+          </div>
+          <div>
+            <label for="compareTimeZone" class="font-semibold">Time Zone:</label>
+            <select id="compareTimeZone" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="local">Local System</option>
+              <option value="America/New_York">Eastern (EST)</option>
+              <option value="America/Chicago">Central (CST)</option>
+              <option value="America/Denver">Mountain (MST)</option>
+              <option value="America/Los_Angeles">Pacific (PST)</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-3">
+            <label for="compareEstimationStrength" class="font-semibold">Estimation Strength:</label>
+            <input id="compareEstimationStrength" type="range" min="0" max="100" step="1" value="50"
+              class="w-full accent-indigo-400 mt-1">
+            <span id="compareEstimationStrengthLabel" class="ml-1 font-semibold text-indigo-300">50%</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mt-4 items-center">
+          <button id="compareAuditToggle"
+            class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🔍 Enable Audits
+          </button>
+          <span id="compareAuditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+          <div id="compareAuditInfo" class="popup">
+            Adds small, human-like subscriber fluctuations. Adjust "Intensity" for strength and "Frequency" for occurrence rate.
+          </div>
+
+          <label for="compareAuditStrength" class="font-semibold ml-2">Intensity:</label>
+          <select id="compareAuditStrength" class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+            <option value="0.05">Calm</option>
+            <option value="0.12" selected>Moderate</option>
+            <option value="0.25">Volatile</option>
+          </select>
+
+          <label for="compareAuditFreq" class="font-semibold ml-4">Frequency:</label>
+          <input id="compareAuditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04" class="w-32 accent-emerald-400">
+          <span id="compareFreqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+
+          <button id="compareRandomToggle"
+            class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
+            🎲 Enable Natural Randomization
+          </button>
+          <span id="compareRandomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+          <div id="compareRandomInfo" class="popup">
+            Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
+          </div>
+
+          <label for="compareRandStrength" class="font-semibold ml-2">Strength:</label>
+          <input id="compareRandStrength" type="range" min="0.005" max="0.10" step="0.005" value="0.03" class="w-32 accent-sky-400">
+          <span id="compareRandStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
+        </div>
+        <button id="compareBtn"
+          class="mt-6 px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+          🚀 Compare Channels
+        </button>
+      </section>
+
+      <section id="compareResults" class="hidden glass space-y-6 animate-section">
+        <div class="overflow-x-auto">
+          <table id="compareTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Total Subscribers</h3>
+            <canvas id="compareChart" class="w-full h-96"></canvas>
+          </div>
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Subscriber Gap</h3>
+            <canvas id="compareGapChart" class="w-full h-96"></canvas>
+          </div>
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Daily Gains Comparison</h3>
+            <canvas id="compareGainsChart" class="w-full h-96"></canvas>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <button id="compareDownloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Download CSV</button>
+          <button id="copyCompareGainsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Copy A Gains (Vertical)</button>
+          <button id="copyCompareGainsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Copy A Gains (Horizontal)</button>
+          <button id="copyCompareGainsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">Copy B Gains (Vertical)</button>
+          <button id="copyCompareGainsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">Copy B Gains (Horizontal)</button>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -328,16 +498,27 @@
   <script>
     const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
     let currentMode = "dark";
-    let est = [], subsChart = null, gainChart = null, gainsArr = [];
+    let est = [], subsChart = null, gainChart = null, compareChart = null, compareGainChart = null, compareGapChart = null, gainsArr = [];
+    let compareState = null;
+    let compareExport = null;
+    let compareGainsA = [], compareGainsB = [];
     let auditsEnabled = false, randomizationEnabled = false;
     let estStrength = 0.5;
 
     const estSlider = document.getElementById("estimationStrength");
     const estLabel = document.getElementById("estimationStrengthLabel");
-    estSlider.addEventListener("input", () => {
-      estStrength = estSlider.value / 100;
-      estLabel.textContent = Math.round(estStrength * 100) + "%";
-    });
+    const compareEstSlider = document.getElementById("compareEstimationStrength");
+    const compareEstLabel = document.getElementById("compareEstimationStrengthLabel");
+    const setEstStrength = (value) => {
+      estStrength = value;
+      const pct = Math.round(estStrength * 100);
+      estSlider.value = pct;
+      estLabel.textContent = pct + "%";
+      compareEstSlider.value = pct;
+      compareEstLabel.textContent = pct + "%";
+    };
+    estSlider.addEventListener("input", () => setEstStrength(estSlider.value / 100));
+    compareEstSlider.addEventListener("input", () => setEstStrength(compareEstSlider.value / 100));
 
     const togglePopup = (btnId, popupId) => {
       const btn = document.getElementById(btnId);
@@ -350,14 +531,44 @@
     };
     togglePopup("auditInfoBtn", "auditInfo");
     togglePopup("randomInfoBtn", "randomInfo");
+    togglePopup("compareAuditInfoBtn", "compareAuditInfo");
+    togglePopup("compareRandomInfoBtn", "compareRandomInfo");
     document.addEventListener("click", () => document.querySelectorAll(".popup").forEach(p => p.style.display = "none"));
 
     const freqSlider = document.getElementById("auditFreq");
     const freqLabel = document.getElementById("freqLabel");
     const randSlider = document.getElementById("randStrength");
     const randLabel = document.getElementById("randStrengthLabel");
-    freqSlider.addEventListener("input", () => freqLabel.textContent = Math.round(freqSlider.value * 100) + "%");
-    randSlider.addEventListener("input", () => randLabel.textContent = Math.round(randSlider.value * 100) + "%");
+    const compareFreqSlider = document.getElementById("compareAuditFreq");
+    const compareFreqLabel = document.getElementById("compareFreqLabel");
+    const compareRandSlider = document.getElementById("compareRandStrength");
+    const compareRandLabel = document.getElementById("compareRandStrengthLabel");
+    const auditStrength = document.getElementById("auditStrength");
+    const compareAuditStrength = document.getElementById("compareAuditStrength");
+
+    const setAuditFreq = (value) => {
+      freqSlider.value = value;
+      compareFreqSlider.value = value;
+      freqLabel.textContent = Math.round(value * 100) + "%";
+      compareFreqLabel.textContent = Math.round(value * 100) + "%";
+    };
+    const setRandStrength = (value) => {
+      randSlider.value = value;
+      compareRandSlider.value = value;
+      randLabel.textContent = Math.round(value * 100) + "%";
+      compareRandLabel.textContent = Math.round(value * 100) + "%";
+    };
+    const setAuditStrength = (value) => {
+      auditStrength.value = value;
+      compareAuditStrength.value = value;
+    };
+
+    freqSlider.addEventListener("input", () => setAuditFreq(freqSlider.value));
+    compareFreqSlider.addEventListener("input", () => setAuditFreq(compareFreqSlider.value));
+    randSlider.addEventListener("input", () => setRandStrength(randSlider.value));
+    compareRandSlider.addEventListener("input", () => setRandStrength(compareRandSlider.value));
+    auditStrength.addEventListener("change", () => setAuditStrength(auditStrength.value));
+    compareAuditStrength.addEventListener("change", () => setAuditStrength(compareAuditStrength.value));
 
     const formatDate = (ts, mode) => {
       const tz = document.getElementById("timeZone").value;
@@ -387,6 +598,74 @@
       document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
       e.target.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
     });
+
+    const setActiveTab = (tab) => {
+      const single = document.getElementById("singleTab");
+      const compare = document.getElementById("compareTab");
+      const btnSingle = document.getElementById("tabSingle");
+      const btnCompare = document.getElementById("tabCompare");
+      const isSingle = tab === "single";
+      single.classList.toggle("hidden", !isSingle);
+      compare.classList.toggle("hidden", isSingle);
+      btnSingle.classList.toggle("active", isSingle);
+      btnCompare.classList.toggle("active", !isSingle);
+    };
+    document.getElementById("tabSingle").addEventListener("click", () => setActiveTab("single"));
+    document.getElementById("tabCompare").addEventListener("click", () => setActiveTab("compare"));
+
+    const intervalMode = document.getElementById("intervalMode");
+    const compareIntervalMode = document.getElementById("compareIntervalMode");
+    const timeFormat = document.getElementById("timeFormat");
+    const compareTimeFormat = document.getElementById("compareTimeFormat");
+    const timeZone = document.getElementById("timeZone");
+    const compareTimeZone = document.getElementById("compareTimeZone");
+
+    const syncSelect = (source, target) => {
+      if (target.value !== source.value) target.value = source.value;
+    };
+    intervalMode.addEventListener("change", () => syncSelect(intervalMode, compareIntervalMode));
+    compareIntervalMode.addEventListener("change", () => syncSelect(compareIntervalMode, intervalMode));
+    timeFormat.addEventListener("change", () => syncSelect(timeFormat, compareTimeFormat));
+    compareTimeFormat.addEventListener("change", () => {
+      syncSelect(compareTimeFormat, timeFormat);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+    });
+    timeZone.addEventListener("change", () => syncSelect(timeZone, compareTimeZone));
+    compareTimeZone.addEventListener("change", () => {
+      syncSelect(compareTimeZone, timeZone);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+    });
+
+    const compareAuditToggle = document.getElementById("compareAuditToggle");
+    const compareRandomToggle = document.getElementById("compareRandomToggle");
+    const syncAuditToggleText = () => {
+      compareAuditToggle.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+    };
+    const syncRandomToggleText = () => {
+      compareRandomToggle.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+    };
+    document.getElementById("auditToggle").addEventListener("click", () => syncAuditToggleText());
+    document.getElementById("randomToggle").addEventListener("click", () => syncRandomToggleText());
+    compareAuditToggle.addEventListener("click", () => {
+      document.getElementById("auditToggle").click();
+      syncAuditToggleText();
+    });
+    compareRandomToggle.addEventListener("click", () => {
+      document.getElementById("randomToggle").click();
+      syncRandomToggleText();
+    });
+
+    setEstStrength(estStrength);
+    setAuditStrength(auditStrength.value);
+    setAuditFreq(freqSlider.value);
+    setRandStrength(randSlider.value);
+    syncSelect(intervalMode, compareIntervalMode);
+    syncSelect(timeFormat, compareTimeFormat);
+    syncSelect(timeZone, compareTimeZone);
+    syncAuditToggleText();
+    syncRandomToggleText();
 
     /* === Parse Count === */
     const parseCount = (r) => {
@@ -477,7 +756,7 @@
         const avgGain = totalGain / steps;
 
         // 🎚️ Strength-based variation
-        const variation = 0.02 + estStrength * 0.25;
+        const variation = (0.02 + estStrength * 0.25) / Math.sqrt(steps);
 
         // 🕛 Align daily mode to midnight boundaries
         if (mode === "day") {
@@ -492,9 +771,14 @@
         if (i === 0) output.push({ ts: startTS, c: s.c });
 
         let acc = 0;
-        let increments = Array.from({ length: steps }, () =>
-          avgGain * (1 + (Math.random() - 0.5) * variation * 2)
-        );
+        let drift = 0;
+        const phase = Math.random() * Math.PI * 2;
+        let increments = Array.from({ length: steps }, (_, d) => {
+          drift = drift * 0.85 + (Math.random() - 0.5) * variation * 2;
+          const wave = Math.sin((d / steps) * Math.PI * 2 + phase) * variation;
+          const factor = Math.max(0.05, 1 + drift + wave);
+          return avgGain * factor;
+        });
         const sum = increments.reduce((a, b) => a + b, 0);
         increments = increments.map(g => (g * totalGain) / sum);
 
@@ -579,6 +863,130 @@
       });
     }
 
+    function renderCompare(estA, estB, mode, nameA, nameB) {
+      const step = units[mode];
+      const alignStart = (ts) => {
+        if (mode !== "day") return ts;
+        const d = new Date(ts);
+        return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+      };
+      const start = alignStart(Math.min(estA[0].ts, estB[0].ts));
+      const end = Math.max(estA[estA.length - 1].ts, estB[estB.length - 1].ts);
+      const timeline = [];
+      for (let t = start; t <= end; t += step) timeline.push(t);
+
+      const seriesFrom = (data) => {
+        let idx = 0;
+        let last = null;
+        return timeline.map(t => {
+          while (idx < data.length && data[idx].ts <= t) {
+            last = data[idx].c;
+            idx++;
+          }
+          return last;
+        });
+      };
+
+      const labels = timeline.map(ts => formatDate(ts, mode));
+      const seriesA = seriesFrom(estA);
+      const seriesB = seriesFrom(estB);
+      const txt = currentMode === "dark" ? "#fff" : "#000";
+
+      const gainsA = seriesA.map((v, i) => {
+        if (i === 0 || v === null || seriesA[i - 1] === null) return null;
+        return v - seriesA[i - 1];
+      });
+      const gainsB = seriesB.map((v, i) => {
+        if (i === 0 || v === null || seriesB[i - 1] === null) return null;
+        return v - seriesB[i - 1];
+      });
+      const gapSeries = seriesA.map((v, i) => {
+        const b = seriesB[i];
+        if (v === null || b === null) return null;
+        return v - b;
+      });
+
+      compareChart?.destroy();
+      compareChart = new Chart(document.getElementById("compareChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: nameA, data: seriesA, borderColor: "#facc15", tension: 0.35, pointRadius: 0, spanGaps: true },
+            { label: nameB, data: seriesB, borderColor: "#22d3ee", tension: 0.35, pointRadius: 0, spanGaps: true }
+          ]
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      compareGapChart?.destroy();
+      compareGapChart = new Chart(document.getElementById("compareGapChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "Subscriber Gap", data: gapSeries, borderColor: "#f97316", tension: 0.35, pointRadius: 0, spanGaps: true }
+          ]
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      const dailyMapA = new Map();
+      const dailyMapB = new Map();
+      timeline.forEach((ts, i) => {
+        const gainA = gainsA[i];
+        const gainB = gainsB[i];
+        const dayKey = new Date(ts).toISOString().slice(0, 10);
+        if (gainA !== null) dailyMapA.set(dayKey, (dailyMapA.get(dayKey) || 0) + gainA);
+        if (gainB !== null) dailyMapB.set(dayKey, (dailyMapB.get(dayKey) || 0) + gainB);
+      });
+      const dayKeys = Array.from(new Set([...dailyMapA.keys(), ...dailyMapB.keys()])).sort();
+      const dailyLabels = dayKeys.map(d => formatDate(new Date(d).getTime(), "day"));
+      const dailyGainsA = dayKeys.map(k => dailyMapA.get(k) ?? null);
+      const dailyGainsB = dayKeys.map(k => dailyMapB.get(k) ?? null);
+
+      compareGainChart?.destroy();
+      compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
+        type: "line",
+        data: {
+          labels: dailyLabels,
+          datasets: [
+            { label: `${nameA} Daily Gain`, data: dailyGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
+            { label: `${nameB} Daily Gain`, data: dailyGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
+          ]
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      const table = document.getElementById("compareTable");
+      let h = `<thead><tr><th>Date/Time</th><th>${nameA} Subs</th><th>${nameA} Gain</th><th>${nameB} Subs</th><th>${nameB} Gain</th><th>Sub Gap</th></tr></thead><tbody>`;
+      labels.forEach((label, i) => {
+        const subA = seriesA[i];
+        const subB = seriesB[i];
+        const gA = gainsA[i];
+        const gB = gainsB[i];
+        const gap = gapSeries[i];
+        const clsA = gA > 0 ? "text-emerald-300" : gA < 0 ? "text-red-400" : "text-white/60";
+        const clsB = gB > 0 ? "text-emerald-300" : gB < 0 ? "text-red-400" : "text-white/60";
+        const clsGap = gap > 0 ? "text-emerald-300" : gap < 0 ? "text-red-400" : "text-white/60";
+        const showSubA = subA === null ? "-" : subA.toLocaleString();
+        const showSubB = subB === null ? "-" : subB.toLocaleString();
+        const showGA = gA === null ? "-" : `${gA > 0 ? "+" : gA < 0 ? "-" : ""}${Math.abs(gA).toLocaleString()}`;
+        const showGB = gB === null ? "-" : `${gB > 0 ? "+" : gB < 0 ? "-" : ""}${Math.abs(gB).toLocaleString()}`;
+        const showGap = gap === null ? "-" : `${gap > 0 ? "+" : gap < 0 ? "-" : ""}${Math.abs(gap).toLocaleString()}`;
+        h += `<tr><td>${label}</td><td>${showSubA}</td><td class="${clsA}">${showGA}</td><td>${showSubB}</td><td class="${clsB}">${showGB}</td><td class="${clsGap}">${showGap}</td></tr>`;
+      });
+      table.innerHTML = h + "</tbody>";
+
+      compareGainsA = gainsA.filter(g => g !== null);
+      compareGainsB = gainsB.filter(g => g !== null);
+      compareExport = { labels, seriesA, seriesB, gainsA, gainsB, gapSeries, nameA, nameB };
+      document.getElementById("copyCompareGainsAVert").textContent = `Copy ${nameA} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsAHoriz").textContent = `Copy ${nameA} Gains (Horizontal)`;
+      document.getElementById("copyCompareGainsBVert").textContent = `Copy ${nameB} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsBHoriz").textContent = `Copy ${nameB} Gains (Horizontal)`;
+    }
+
     /* === Copy + CSV === */
     const showToast = () => {
       const t = document.getElementById("toast");
@@ -599,12 +1007,40 @@
       URL.revokeObjectURL(a.href);
     }
 
+    function downloadCompareCSV() {
+      if (!compareExport) return;
+      const { labels, seriesA, seriesB, gainsA, gainsB, gapSeries, nameA, nameB } = compareExport;
+      const rows = labels.map((label, i) => [
+        label,
+        seriesA[i] === null ? "" : seriesA[i],
+        gainsA[i] === null ? "" : gainsA[i],
+        seriesB[i] === null ? "" : seriesB[i],
+        gainsB[i] === null ? "" : gainsB[i],
+        gapSeries[i] === null ? "" : gapSeries[i]
+      ]);
+      const csv = [[
+        "Date/Time",
+        `${nameA} Subscribers`,
+        `${nameA} Gain`,
+        `${nameB} Subscribers`,
+        `${nameB} Gain`,
+        "Sub Gap"
+      ], ...rows].map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "comparison-estimates.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     /* === Mode Toggle === */
     document.getElementById("modeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
       currentMode = document.body.classList.contains("dark") ? "dark" : "light";
       if (est.length) renderCharts(est);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
     });
 
     /* === Main Execution === */
@@ -630,6 +1066,58 @@
         } catch (e) { alert(e.message); }
       });
 
+      document.getElementById("compareBtn").addEventListener("click", () => {
+        const rawA = document.getElementById("dataInputA").value;
+        const rawB = document.getElementById("dataInputB").value;
+        const nameA = document.getElementById("channelNameA").value.trim() || "Channel A";
+        const nameB = document.getElementById("channelNameB").value.trim() || "Channel B";
+        const mode = document.getElementById("intervalMode").value;
+        if (!rawA.trim() || !rawB.trim()) return alert("Enter data for both channels.");
+        let ptsA, ptsB;
+        try {
+          ptsA = parseInput(rawA, mode);
+          ptsB = parseInput(rawB, mode);
+          if (ptsA.length < 2 || ptsB.length < 2) return alert("Each channel needs at least two points.");
+        } catch (e) { return alert(e.message); }
+
+        try {
+          let estA = interpolate(ptsA, mode);
+          let estB = interpolate(ptsB, mode);
+          if (auditsEnabled) {
+            estA = applyAudits(estA);
+            estB = applyAudits(estB);
+          }
+          if (randomizationEnabled) {
+            estA = applyNaturalRandomization(estA, ptsA);
+            estB = applyNaturalRandomization(estB, ptsB);
+          }
+          compareState = { estA, estB, mode, nameA, nameB };
+          renderCompare(estA, estB, mode, nameA, nameB);
+          document.getElementById("compareResults").classList.remove("hidden");
+        } catch (e) { alert(e.message); }
+      });
+
+      document.getElementById("compareDownloadBtn").addEventListener("click", () => {
+        downloadCompareCSV();
+      });
+
+      document.getElementById("copyCompareGainsAVert").addEventListener("click", () => {
+        if (!compareGainsA.length) return;
+        copyText(compareGainsA.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareGainsAHoriz").addEventListener("click", () => {
+        if (!compareGainsA.length) return;
+        copyText(compareGainsA.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyCompareGainsBVert").addEventListener("click", () => {
+        if (!compareGainsB.length) return;
+        copyText(compareGainsB.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareGainsBHoriz").addEventListener("click", () => {
+        if (!compareGainsB.length) return;
+        copyText(compareGainsB.map(g => g.toLocaleString()).join("\t"));
+      });
+
       document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
         if (!est.length) return;
         copyText(gainsArr.map(g => g.toLocaleString()).join("\n"));
@@ -644,10 +1132,12 @@
       ["timeFormat", "timeZone"].forEach(id =>
         document.getElementById(id).addEventListener("change", () => {
           if (est.length) renderTable(est, document.getElementById("intervalMode").value);
+          if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
         })
       );
     });
   </script>
 </body>
 </html>
+
 
