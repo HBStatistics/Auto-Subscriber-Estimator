@@ -212,7 +212,7 @@
   <header class="text-center mb-12 relative z-10 animate-section">
     <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
     <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
-      Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
+      Paste your milestones ? get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
     </p>
   </header>
 
@@ -275,7 +275,7 @@
           class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
           🔍 Enable Audits
         </button>
-        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
         <div id="auditInfo" class="popup">
           Adds small, human-like subscriber fluctuations. Adjust “Intensity” for strength and “Frequency” for occurrence rate.
         </div>
@@ -295,7 +295,7 @@
           class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
           🎲 Enable Natural Randomization
         </button>
-        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
         <div id="randomInfo" class="popup">
           Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
         </div>
@@ -321,8 +321,8 @@
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-semibold">2. Estimates</h2>
         <div class="flex flex-col text-right">
-          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">✅ Audits Active</span>
-          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">✅ Randomization Active</span>
+          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">? Audits Active</span>
+          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">? Randomization Active</span>
         </div>
       </div>
 
@@ -342,7 +342,7 @@
       </div>
 
       <div class="flex flex-wrap gap-4">
-        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇ Download CSV</button>
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">? Download CSV</button>
         <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
         <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
       </div>
@@ -426,7 +426,7 @@
             class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
             🔍 Enable Audits
           </button>
-          <span id="compareAuditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+          <span id="compareAuditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
           <div id="compareAuditInfo" class="popup">
             Adds small, human-like subscriber fluctuations. Adjust "Intensity" for strength and "Frequency" for occurrence rate.
           </div>
@@ -446,7 +446,7 @@
             class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
             🎲 Enable Natural Randomization
           </button>
-          <span id="compareRandomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">❔</span>
+          <span id="compareRandomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
           <div id="compareRandomInfo" class="popup">
             Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
           </div>
@@ -457,7 +457,7 @@
         </div>
         <button id="compareBtn"
           class="mt-6 px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
-          🚀 Compare Channels
+          📊 Compare Channels
         </button>
       </section>
 
@@ -755,8 +755,8 @@
         const totalGain = e.c - s.c;
         const avgGain = totalGain / steps;
 
-        // 🎚️ Strength-based variation
-        const variation = (0.02 + estStrength * 0.25) / Math.sqrt(steps);
+        // ?🎚️ Strength-based variation
+        const variation = 0.02 + estStrength * 0.25;
 
         // 🕛 Align daily mode to midnight boundaries
         if (mode === "day") {
@@ -771,14 +771,9 @@
         if (i === 0) output.push({ ts: startTS, c: s.c });
 
         let acc = 0;
-        let drift = 0;
-        const phase = Math.random() * Math.PI * 2;
-        let increments = Array.from({ length: steps }, (_, d) => {
-          drift = drift * 0.85 + (Math.random() - 0.5) * variation * 2;
-          const wave = Math.sin((d / steps) * Math.PI * 2 + phase) * variation;
-          const factor = Math.max(0.05, 1 + drift + wave);
-          return avgGain * factor;
-        });
+        let increments = Array.from({ length: steps }, () =>
+          avgGain * (1 + (Math.random() - 0.5) * variation * 2)
+        );
         const sum = increments.reduce((a, b) => a + b, 0);
         increments = increments.map(g => (g * totalGain) / sum);
 
@@ -789,8 +784,7 @@
       }
       return output;
     }
-
-    /* === Audits === */
+/* === Audits === */
     function applyAudits(data) {
       const intensity = parseFloat(document.getElementById("auditStrength").value);
       const freq = parseFloat(document.getElementById("auditFreq").value);
@@ -1139,5 +1133,3 @@
   </script>
 </body>
 </html>
-
-
