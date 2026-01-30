@@ -301,7 +301,7 @@
         </div>
 
         <label for="randStrength" class="font-semibold ml-2">Strength:</label>
-        <input id="randStrength" type="range" min="0.005" max="0.10" step="0.005" value="0.03" class="w-32 accent-sky-400">
+        <input id="randStrength" type="range" min="0.01" max="0.10" step="0.01" value="0.03" class="w-32 accent-sky-400">
         <span id="randStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
       </div>
 
@@ -311,10 +311,16 @@
         please report them to the HB Statistics developer team for review and improvement.
       </div>
 
-      <button id="estimateBtn"
-        class="mt-6 px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
-        🚀 Estimate Growth
-      </button>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button id="estimateBtn"
+          class="px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+          🚀 Estimate Growth
+        </button>
+        <button id="saveSettingsBtn"
+          class="px-6 py-3 bg-amber-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+          Save Settings
+        </button>
+      </div>
     </section>
 
     <section id="resultsSection" class="hidden glass space-y-8 animate-section">
@@ -342,7 +348,9 @@
       </div>
 
       <div class="flex flex-wrap gap-4">
-        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">? Download CSV</button>
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇️ Download CSV</button>
+        <button id="copyTotalsBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy Totals (Vertical)</button>
+        <button id="copyTotalsHorizBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy Totals (Horizontal)</button>
         <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
         <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
       </div>
@@ -452,13 +460,19 @@
           </div>
 
           <label for="compareRandStrength" class="font-semibold ml-2">Strength:</label>
-          <input id="compareRandStrength" type="range" min="0.005" max="0.10" step="0.005" value="0.03" class="w-32 accent-sky-400">
+          <input id="compareRandStrength" type="range" min="0.01" max="0.10" step="0.01" value="0.03" class="w-32 accent-sky-400">
           <span id="compareRandStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
         </div>
-        <button id="compareBtn"
-          class="mt-6 px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
-          🚀 Compare Channels
-        </button>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button id="compareBtn"
+            class="px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🚀 Compare Channels
+          </button>
+          <button id="saveSettingsCompareBtn"
+            class="px-6 py-3 bg-amber-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            Save Settings
+          </button>
+        </div>
       </section>
 
       <section id="compareResults" class="hidden glass space-y-6 animate-section">
@@ -480,11 +494,15 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-4">
-          <button id="compareDownloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Download CSV</button>
-          <button id="copyCompareGainsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Copy A Gains (Vertical)</button>
-          <button id="copyCompareGainsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">Copy A Gains (Horizontal)</button>
-          <button id="copyCompareGainsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">Copy B Gains (Vertical)</button>
-          <button id="copyCompareGainsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">Copy B Gains (Horizontal)</button>
+          <button id="compareDownloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇️ Download CSV</button>
+          <button id="copyCompareTotalsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Totals (Vertical)</button>
+          <button id="copyCompareTotalsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Totals (Horizontal)</button>
+          <button id="copyCompareTotalsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Totals (Vertical)</button>
+          <button id="copyCompareTotalsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Totals (Horizontal)</button>
+          <button id="copyCompareGainsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Gains (Vertical)</button>
+          <button id="copyCompareGainsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Gains (Horizontal)</button>
+          <button id="copyCompareGainsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Gains (Vertical)</button>
+          <button id="copyCompareGainsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Gains (Horizontal)</button>
         </div>
       </section>
     </section>
@@ -504,6 +522,7 @@
     let compareGainsA = [], compareGainsB = [];
     let auditsEnabled = false, randomizationEnabled = false;
     let estStrength = 0.5;
+    let lastMode = "day";
 
     const estSlider = document.getElementById("estimationStrength");
     const estLabel = document.getElementById("estimationStrengthLabel");
@@ -667,6 +686,61 @@
     syncAuditToggleText();
     syncRandomToggleText();
 
+    const saveSettings = () => {
+      const payload = {
+        intervalMode: intervalMode.value,
+        timeFormat: timeFormat.value,
+        timeZone: timeZone.value,
+        estStrength: Number(estStrength),
+        auditStrength: auditStrength.value,
+        auditFreq: freqSlider.value,
+        randStrength: randSlider.value,
+        auditsEnabled,
+        randomizationEnabled
+      };
+      localStorage.setItem("autoEstimatorSettings", JSON.stringify(payload));
+      showToast();
+    };
+
+    const loadSettings = () => {
+      const raw = localStorage.getItem("autoEstimatorSettings");
+      if (!raw) return;
+      let settings;
+      try {
+        settings = JSON.parse(raw);
+      } catch {
+        return;
+      }
+      if (settings.intervalMode) {
+        intervalMode.value = settings.intervalMode;
+        syncSelect(intervalMode, compareIntervalMode);
+      }
+      if (settings.timeFormat) {
+        timeFormat.value = settings.timeFormat;
+        syncSelect(timeFormat, compareTimeFormat);
+      }
+      if (settings.timeZone) {
+        timeZone.value = settings.timeZone;
+        syncSelect(timeZone, compareTimeZone);
+      }
+      if (typeof settings.estStrength === "number") setEstStrength(settings.estStrength);
+      if (settings.auditStrength) setAuditStrength(settings.auditStrength);
+      if (settings.auditFreq) setAuditFreq(settings.auditFreq);
+      if (settings.randStrength) setRandStrength(settings.randStrength);
+      if (typeof settings.auditsEnabled === "boolean") {
+        auditsEnabled = settings.auditsEnabled;
+        document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
+        document.getElementById("auditToggle").textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+      }
+      if (typeof settings.randomizationEnabled === "boolean") {
+        randomizationEnabled = settings.randomizationEnabled;
+        document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
+        document.getElementById("randomToggle").textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+      }
+      syncAuditToggleText();
+      syncRandomToggleText();
+    };
+
     /* === Parse Count === */
     const parseCount = (r) => {
       const c = r.replace(/,/g, "").trim().toLowerCase();
@@ -826,6 +900,7 @@
     /* === Table Rendering === */
     function renderTable(data, mode) {
       const tbl = document.getElementById("resultTable");
+      lastMode = mode;
       let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
       gainsArr = [];
       data.forEach((r, i) => {
@@ -975,10 +1050,14 @@
       compareGainsA = gainsA.filter(g => g !== null);
       compareGainsB = gainsB.filter(g => g !== null);
       compareExport = { labels, seriesA, seriesB, gainsA, gainsB, gapSeries, nameA, nameB };
-      document.getElementById("copyCompareGainsAVert").textContent = `Copy ${nameA} Gains (Vertical)`;
-      document.getElementById("copyCompareGainsAHoriz").textContent = `Copy ${nameA} Gains (Horizontal)`;
-      document.getElementById("copyCompareGainsBVert").textContent = `Copy ${nameB} Gains (Vertical)`;
-      document.getElementById("copyCompareGainsBHoriz").textContent = `Copy ${nameB} Gains (Horizontal)`;
+      document.getElementById("copyCompareTotalsAVert").textContent = `📋 Copy ${nameA} Totals (Vertical)`;
+      document.getElementById("copyCompareTotalsAHoriz").textContent = `📋 Copy ${nameA} Totals (Horizontal)`;
+      document.getElementById("copyCompareTotalsBVert").textContent = `📋 Copy ${nameB} Totals (Vertical)`;
+      document.getElementById("copyCompareTotalsBHoriz").textContent = `📋 Copy ${nameB} Totals (Horizontal)`;
+      document.getElementById("copyCompareGainsAVert").textContent = `📋 Copy ${nameA} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsAHoriz").textContent = `📋 Copy ${nameA} Gains (Horizontal)`;
+      document.getElementById("copyCompareGainsBVert").textContent = `📋 Copy ${nameB} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsBHoriz").textContent = `📋 Copy ${nameB} Gains (Horizontal)`;
     }
 
     /* === Copy + CSV === */
@@ -989,6 +1068,23 @@
       window.toastTimeout = setTimeout(() => t.classList.remove("show"), 1500);
     };
     const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
+    const buildTotalsText = (data, mode) => {
+      if (!data.length) return "";
+      const start = data[0].c;
+      const end = data[data.length - 1].c;
+      const steps = Math.max(1, data.length - 1);
+      const totalGain = end - start;
+      const avgGain = totalGain / steps;
+      const unit = { day: "day", hour: "hour", minute: "minute", second: "second" }[mode] || mode;
+      const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return [
+        `Start Subscribers: ${fmt(start)}`,
+        `End Subscribers: ${fmt(end)}`,
+        `Total Gain: ${fmt(totalGain)}`,
+        `Average Gain per ${unit}: ${fmt(avgGain)}`,
+        `Intervals: ${steps.toLocaleString()}`
+      ].join("\n");
+    };
 
     function downloadCSV(data, mode) {
       const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts, mode), r.c, i ? r.c - data[i - 1].c : 0])]
@@ -1039,6 +1135,9 @@
 
     /* === Main Execution === */
     document.addEventListener("DOMContentLoaded", () => {
+      loadSettings();
+      document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
+      document.getElementById("saveSettingsCompareBtn").addEventListener("click", saveSettings);
       document.getElementById("estimateBtn").addEventListener("click", () => {
         const val = document.getElementById("dataInput").value;
         const mode = document.getElementById("intervalMode").value;
@@ -1103,6 +1202,14 @@
         if (!compareGainsA.length) return;
         copyText(compareGainsA.map(g => g.toLocaleString()).join("\t"));
       });
+      document.getElementById("copyCompareTotalsAVert").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesA.filter(v => v !== null).map(v => v.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareTotalsAHoriz").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesA.filter(v => v !== null).map(v => v.toLocaleString()).join("\t"));
+      });
       document.getElementById("copyCompareGainsBVert").addEventListener("click", () => {
         if (!compareGainsB.length) return;
         copyText(compareGainsB.map(g => g.toLocaleString()).join("\n"));
@@ -1110,6 +1217,14 @@
       document.getElementById("copyCompareGainsBHoriz").addEventListener("click", () => {
         if (!compareGainsB.length) return;
         copyText(compareGainsB.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyCompareTotalsBVert").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesB.filter(v => v !== null).map(v => v.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareTotalsBHoriz").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesB.filter(v => v !== null).map(v => v.toLocaleString()).join("\t"));
       });
 
       document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
@@ -1119,6 +1234,14 @@
       document.getElementById("copyGainsHorizBtn").addEventListener("click", () => {
         if (!est.length) return;
         copyText(gainsArr.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyTotalsBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(est.map(r => r.c.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyTotalsHorizBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(est.map(r => r.c.toLocaleString()).join("\t"));
       });
       document.getElementById("downloadBtn").addEventListener("click", () => {
         if (est.length) downloadCSV(est, document.getElementById("intervalMode").value);
