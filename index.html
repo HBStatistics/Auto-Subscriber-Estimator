@@ -19,27 +19,14 @@
     }
 
     body.dark {
-      background: linear-gradient(135deg, #020617, #0f172a, #030712);
-      background-size: 200% 200%;
-      animation: gradientShift 18s ease infinite;
+      background: #020617;
       color: #f8fafc;
     }
 
     body.light {
-      background: linear-gradient(135deg, #f8fafc, #e2e8f0, #f1f5f9);
+      background: #f8fafc;
       color: #111;
     }
-
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .shape { position:absolute; border-radius:50%; filter:blur(100px); opacity:0.4; animation:floaty 20s ease-in-out infinite; }
-    .shape1 { width:300px; height:300px; top:10%; left:10%; background:#6366f1; }
-    .shape2 { width:400px; height:400px; bottom:15%; right:15%; background:#22d3ee; animation-delay:-10s; }
-    @keyframes floaty { 0%,100%{transform:translateY(0)translateX(0)}50%{transform:translateY(-40px)translateX(30px)} }
 
     .glass {
       background: rgba(15, 23, 42, 0.85);
@@ -197,11 +184,6 @@
 </head>
 
 <body class="dark p-6 relative">
-  <div class="absolute inset-0 overflow-hidden -z-10">
-    <div class="shape shape1"></div>
-    <div class="shape shape2"></div>
-  </div>
-
   <div class="flex justify-end mb-4 relative z-10">
     <button id="modeToggle"
       class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
@@ -238,6 +220,8 @@
           <label for="intervalMode" class="font-semibold">Estimation Interval:</label>
           <select id="intervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
             <option value="day">Daily</option>
+            <option value="week">Weekly</option>
+            <option value="month">Monthly</option>
             <option value="hour">Hourly</option>
             <option value="minute">Minutely</option>
             <option value="second">Secondly</option>
@@ -398,6 +382,8 @@
             <label for="compareIntervalMode" class="font-semibold">Estimation Interval:</label>
             <select id="compareIntervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
               <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
               <option value="hour">Hourly</option>
               <option value="minute">Minutely</option>
               <option value="second">Secondly</option>
@@ -489,7 +475,7 @@
             <canvas id="compareGapChart" class="w-full h-96"></canvas>
           </div>
           <div class="glass p-4">
-            <h3 class="font-semibold mb-2">Daily Gains Comparison</h3>
+            <h3 id="compareGainsTitle" class="font-semibold mb-2">Gains Comparison</h3>
             <canvas id="compareGainsChart" class="w-full h-96"></canvas>
           </div>
         </div>
@@ -514,7 +500,58 @@
   </footer>
 
   <script>
-    const units = { day: 86400000, hour: 3600000, minute: 60000, second: 1000 };
+    const fixedUnitsMs = { day: 86400000, week: 604800000, hour: 3600000, minute: 60000, second: 1000 };
+    const isUtcDateOnlyMode = (mode) => mode === "day" || mode === "week" || mode === "month";
+    const alignToUtcMidnight = (ts) => {
+      const d = new Date(ts);
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    };
+    const addMonthsUtcClamped = (ts, months) => {
+      const d = new Date(ts);
+      const year = d.getUTCFullYear();
+      const month = d.getUTCMonth();
+      const day = d.getUTCDate();
+      const hour = d.getUTCHours();
+      const minute = d.getUTCMinutes();
+      const second = d.getUTCSeconds();
+      const ms = d.getUTCMilliseconds();
+
+      const targetMonthIndex = month + months;
+      const targetYear = year + Math.floor(targetMonthIndex / 12);
+      const targetMonth = ((targetMonthIndex % 12) + 12) % 12;
+      const maxDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+      const targetDay = Math.min(day, maxDay);
+      return Date.UTC(targetYear, targetMonth, targetDay, hour, minute, second, ms);
+    };
+    const stepForward = (ts, mode) => {
+      if (mode === "month") return addMonthsUtcClamped(ts, 1);
+      const step = fixedUnitsMs[mode];
+      if (!step) throw new Error(`Unsupported interval mode: ${mode}`);
+      return ts + step;
+    };
+    const buildTimeline = (startTs, endTs, mode) => {
+      if (!Number.isFinite(startTs) || !Number.isFinite(endTs)) return [];
+      if (endTs < startTs) return [];
+      const timeline = [startTs];
+      if (endTs === startTs) return timeline;
+
+      let t = startTs;
+      let guard = 0;
+      while (t < endTs) {
+        const next = stepForward(t, mode);
+        if (!Number.isFinite(next) || next <= t) throw new Error("Invalid interval stepping; cannot advance timeline.");
+        if (next >= endTs) {
+          if (next !== endTs) timeline.push(endTs);
+          else timeline.push(next);
+          break;
+        }
+        timeline.push(next);
+        t = next;
+        guard++;
+        if (guard > 2000000) throw new Error("Too many intervals; choose a larger estimation interval or shorter date range.");
+      }
+      return timeline;
+    };
     let currentMode = "dark";
     let est = [], subsChart = null, gainChart = null, compareChart = null, compareGainChart = null, compareGapChart = null, gainsArr = [];
     let compareState = null;
@@ -595,7 +632,10 @@
       const base = {
         year: "numeric", month: "short", day: "2-digit"
       };
-      if (mode === "day") {
+      if (mode === "month") {
+        return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", timeZone: "UTC" }).format(new Date(ts));
+      }
+      if (isUtcDateOnlyMode(mode)) {
         return new Intl.DateTimeFormat(undefined, { ...base, timeZone: "UTC" }).format(new Date(ts));
       }
       return new Intl.DateTimeFormat(undefined, {
@@ -765,6 +805,20 @@
           if (!Number.isFinite(n)) return NaN;
           return Math.abs(n) < 1e12 ? n * 1000 : n;
         }
+        if (mode === "month") {
+          const mmYYYY = s.match(/^(\d{1,2})[\/-](\d{4})$/);
+          if (mmYYYY) {
+            const m = Number(mmYYYY[1]) - 1;
+            const y = Number(mmYYYY[2]);
+            if (m >= 0 && m <= 11) return Date.UTC(y, m, 1);
+          }
+          const yyyyMM = s.match(/^(\d{4})[\/-](\d{1,2})$/);
+          if (yyyyMM) {
+            const y = Number(yyyyMM[1]);
+            const m = Number(yyyyMM[2]) - 1;
+            if (m >= 0 && m <= 11) return Date.UTC(y, m, 1);
+          }
+        }
         const extendedYear = s.match(/^(-?\d{5,})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
         if (extendedYear) {
           const possibleEpoch = Number(extendedYear[1]);
@@ -777,14 +831,14 @@
           const y = Number(isoDateOnly[1]);
           const m = Number(isoDateOnly[2]) - 1;
           const d = Number(isoDateOnly[3]);
-          return mode === "day" ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+          return isUtcDateOnlyMode(mode) ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
         }
         const usDateOnly = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
         if (usDateOnly) {
           const m = Number(usDateOnly[1]) - 1;
           const d = Number(usDateOnly[2]);
           const y = Number(usDateOnly[3]);
-          return mode === "day" ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+          return isUtcDateOnlyMode(mode) ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
         }
         return Date.parse(s);
       };
@@ -800,9 +854,11 @@
         return [parts.join(" "), v];
       };
 
-      return r
-        .split(/\r?\n/)
-        .flatMap(l => l.split(/\t+|\s{2,}/))
+      const entries = mode === "month"
+        ? r.split(/\s+/)
+        : r.split(/\r?\n/).flatMap(l => l.split(/\t+|\s{2,}/));
+
+      return entries
         .map(l => l.trim())
         .filter(Boolean)
         .map(l => {
@@ -818,29 +874,24 @@
 
     /* === Interpolation (with Strength + Midnight Alignment) === */
     function interpolate(points, mode) {
-      const step = units[mode];
       const output = [];
 
       for (let i = 0; i < points.length - 1; i++) {
         const s = points[i], e = points[i + 1];
+        if (e.ts <= s.ts) throw new Error("Timestamps must be strictly increasing.");
+
         let startTS = s.ts;
-        const diff = e.ts - s.ts;
-        const steps = Math.max(1, Math.floor(diff / step));
         const totalGain = e.c - s.c;
+
+        // 🎚️ Strength-based variation (0% means no randomness)
+        const variation = estStrength * 0.25;
+
+        // 🕛 Align date-based modes to UTC midnight boundaries
+        if (isUtcDateOnlyMode(mode)) startTS = alignToUtcMidnight(s.ts);
+
+        const timeline = buildTimeline(startTS, e.ts, mode);
+        const steps = Math.max(1, timeline.length - 1);
         const avgGain = totalGain / steps;
-
-        // ?🎚️ Strength-based variation
-        const variation = 0.02 + estStrength * 0.25;
-
-        // 🕛 Align daily mode to midnight boundaries
-        if (mode === "day") {
-          const startDate = new Date(s.ts);
-          startTS = Date.UTC(
-            startDate.getUTCFullYear(),
-            startDate.getUTCMonth(),
-            startDate.getUTCDate()
-          );
-        }
 
         if (i === 0) output.push({ ts: startTS, c: s.c });
 
@@ -853,7 +904,9 @@
 
         for (let d = 0; d < steps; d++) {
           acc += increments[d];
-          output.push({ ts: startTS + (d + 1) * step, c: Math.round(s.c + acc) });
+          const ts = timeline[d + 1] ?? e.ts;
+          const c = d === steps - 1 ? e.c : Math.round(s.c + acc);
+          output.push({ ts, c });
         }
       }
       return output;
@@ -933,16 +986,13 @@
     }
 
     function renderCompare(estA, estB, mode, nameA, nameB) {
-      const step = units[mode];
       const alignStart = (ts) => {
-        if (mode !== "day") return ts;
-        const d = new Date(ts);
-        return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        if (!isUtcDateOnlyMode(mode)) return ts;
+        return alignToUtcMidnight(ts);
       };
       const start = alignStart(Math.min(estA[0].ts, estB[0].ts));
       const end = Math.max(estA[estA.length - 1].ts, estB[estB.length - 1].ts);
-      const timeline = [];
-      for (let t = start; t <= end; t += step) timeline.push(t);
+      const timeline = buildTimeline(start, end, mode);
 
       const seriesFrom = (data) => {
         let idx = 0;
@@ -1000,32 +1050,55 @@
         options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
       });
 
-      const dailyMapA = new Map();
-      const dailyMapB = new Map();
-      timeline.forEach((ts, i) => {
-        const gainA = gainsA[i];
-        const gainB = gainsB[i];
-        const dayKey = new Date(ts).toISOString().slice(0, 10);
-        if (gainA !== null) dailyMapA.set(dayKey, (dailyMapA.get(dayKey) || 0) + gainA);
-        if (gainB !== null) dailyMapB.set(dayKey, (dailyMapB.get(dayKey) || 0) + gainB);
-      });
-      const dayKeys = Array.from(new Set([...dailyMapA.keys(), ...dailyMapB.keys()])).sort();
-      const dailyLabels = dayKeys.map(d => formatDate(new Date(d).getTime(), "day"));
-      const dailyGainsA = dayKeys.map(k => dailyMapA.get(k) ?? null);
-      const dailyGainsB = dayKeys.map(k => dailyMapB.get(k) ?? null);
+      const gainsTitle = document.getElementById("compareGainsTitle");
+      const intervalName = { day: "Daily", week: "Weekly", month: "Monthly" }[mode] || "Daily";
+      const showIntervalGains = mode === "day" || mode === "week" || mode === "month";
+      if (gainsTitle) gainsTitle.textContent = `${showIntervalGains ? intervalName : "Daily"} Gains Comparison`;
 
-      compareGainChart?.destroy();
-      compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
-        type: "line",
-        data: {
-          labels: dailyLabels,
-          datasets: [
-            { label: `${nameA} Daily Gain`, data: dailyGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
-            { label: `${nameB} Daily Gain`, data: dailyGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
-          ]
-        },
-        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
-      });
+      if (showIntervalGains) {
+        const intervalLabels = labels.slice(1);
+        const intervalGainsA = gainsA.slice(1);
+        const intervalGainsB = gainsB.slice(1);
+        compareGainChart?.destroy();
+        compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
+          type: "line",
+          data: {
+            labels: intervalLabels,
+            datasets: [
+              { label: `${nameA} ${intervalName} Gain`, data: intervalGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
+              { label: `${nameB} ${intervalName} Gain`, data: intervalGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
+            ]
+          },
+          options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+        });
+      } else {
+        const dailyMapA = new Map();
+        const dailyMapB = new Map();
+        timeline.forEach((ts, i) => {
+          const gainA = gainsA[i];
+          const gainB = gainsB[i];
+          const dayKey = new Date(ts).toISOString().slice(0, 10);
+          if (gainA !== null) dailyMapA.set(dayKey, (dailyMapA.get(dayKey) || 0) + gainA);
+          if (gainB !== null) dailyMapB.set(dayKey, (dailyMapB.get(dayKey) || 0) + gainB);
+        });
+        const dayKeys = Array.from(new Set([...dailyMapA.keys(), ...dailyMapB.keys()])).sort();
+        const dailyLabels = dayKeys.map(d => formatDate(new Date(d).getTime(), "day"));
+        const dailyGainsA = dayKeys.map(k => dailyMapA.get(k) ?? null);
+        const dailyGainsB = dayKeys.map(k => dailyMapB.get(k) ?? null);
+
+        compareGainChart?.destroy();
+        compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
+          type: "line",
+          data: {
+            labels: dailyLabels,
+            datasets: [
+              { label: `${nameA} Daily Gain`, data: dailyGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
+              { label: `${nameB} Daily Gain`, data: dailyGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
+            ]
+          },
+          options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+        });
+      }
 
       const table = document.getElementById("compareTable");
       let h = `<thead><tr><th>Date/Time</th><th>${nameA} Subs</th><th>${nameA} Gain</th><th>${nameB} Subs</th><th>${nameB} Gain</th><th>Sub Gap</th></tr></thead><tbody>`;
@@ -1075,7 +1148,7 @@
       const steps = Math.max(1, data.length - 1);
       const totalGain = end - start;
       const avgGain = totalGain / steps;
-      const unit = { day: "day", hour: "hour", minute: "minute", second: "second" }[mode] || mode;
+      const unit = { day: "day", week: "week", month: "month", hour: "hour", minute: "minute", second: "second" }[mode] || mode;
       const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
       return [
         `Start Subscribers: ${fmt(start)}`,
@@ -1129,7 +1202,7 @@
       document.body.classList.toggle("dark");
       document.body.classList.toggle("light");
       currentMode = document.body.classList.contains("dark") ? "dark" : "light";
-      if (est.length) renderCharts(est);
+      if (est.length) renderCharts(est, lastMode);
       if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
     });
 
