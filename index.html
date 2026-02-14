@@ -1,18 +1,1331 @@
-function interpolateDaily(data) {
-    let total = data.reduce((acc, daily) => acc + daily.gain, 0);
-    let randomGains = [];
-    let remaining = total;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HB Statistics • Subscriber Growth Tracker</title>
+  <link rel="icon" type="image/png"
+    href="https://images.socialblade.com/256x,q75/https://yt3.ggpht.com/veDA1FfRTsN5P5U97lgW9TRP4u0FnGRQIphD1DQs5TRvoHqZHU4xizu0UxIx5GMdnvKa8mkxQzw=s192-c-k-c0x00ffffff-no-rj">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    // Generate random gains while maintaining total
-    for (let i = 0; i < data.length - 1; i++) {
-        let gain = Math.random() * remaining;
-        randomGains.push(gain);
-        remaining -= gain;
+  <style>
+    body {
+      font-family: 'Poppins', system-ui, sans-serif;
+      min-height: 100vh;
+      transition: background 0.6s ease, color 0.6s ease;
+      background: #020617;
+      color: #f8fafc;
     }
-    randomGains.push(remaining); // last element to ensure total correctness
 
-    // Assign daily gains
-    for (let i = 0; i < data.length; i++) {
-        data[i].gain = randomGains[i];
+    body.dark {
+      background: #020617;
+      color: #f8fafc;
     }
-}
+
+    body.light {
+      background: #f8fafc;
+      color: #111;
+    }
+
+    .glass {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      box-shadow: 0 12px 40px rgba(2, 6, 23, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      position: relative;
+      z-index: 1;
+    }
+    body.dark .glass { box-shadow: 0 20px 48px rgba(2, 6, 23, 0.8); }
+    body.light .glass {
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    #toast {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85); color:#4ade80;
+      padding:0.8rem 1.6rem;border-radius:9999px;
+      font-weight:600;font-size:1rem;opacity:0;
+      pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:9999;
+    }
+    #toast.show { opacity:1;transform:translateX(-50%) translateY(-5px); }
+
+    .underline-glow{position:relative;display:inline-block;}
+    .underline-glow::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;
+      background:linear-gradient(to right,#22d3ee,#4ade80,#818cf8);border-radius:3px;animation:glow 3s linear infinite;}
+    @keyframes glow{0%{opacity:.8}50%{opacity:1}100%{opacity:.8}}
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      border-radius: 1rem;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.85);
+      box-shadow: 0 12px 36px rgba(2, 6, 23, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      color: #e0f2fe;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      font-weight: 700;
+      font-size: .85rem;
+      border-bottom: 2px solid rgba(148, 163, 184, 0.3);
+    }
+    body.light table {
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.15);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+    body.light thead {
+      background: rgba(255, 255, 255, 0.8);
+      color: #111;
+      border-bottom: 2px solid rgba(2, 6, 23, 0.15);
+    }
+    td{padding:.9rem 1rem;font-size:.95rem;border-bottom:1px solid rgba(255,255,255,0.1);}
+    .text-emerald-300{color:#4ade80;font-weight:600;}
+    .text-red-400{color:#f87171;font-weight:600;}
+    .fancy-btn{transition:transform .25s ease,box-shadow .3s ease;}
+    .fancy-btn:hover{transform:translateY(-2px)scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+    .animate-section{animation:fadeUp .8s ease forwards;opacity:0;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    .popup {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      border-radius: 12px;
+      width: 280px;
+      margin-top: 8px;
+      display: none;
+      z-index: 999;
+      animation: fadeIn .3s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    textarea,
+    select,
+    input[type="text"] {
+      background: rgba(15, 23, 42, 0.85);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+    body.dark textarea,
+    body.dark select,
+    body.dark input[type="text"] {
+      background: rgba(15, 23, 42, 0.95) !important;
+      color: #f8fafc !important;
+      border-color: rgba(148, 163, 184, 0.45) !important;
+    }
+    textarea::placeholder {
+      color: rgba(248, 250, 252, 0.6);
+    }
+    body.light textarea,
+    body.light select,
+    body.light input[type="text"] {
+      background: rgba(255, 255, 255, 0.9);
+      color: #111;
+      border: 1px solid rgba(15, 23, 42, 0.25);
+    }
+
+    button {
+      transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    }
+    body.dark button {
+      background: rgba(15, 118, 255, 0.15);
+      color: #e0f2fe;
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(2, 6, 23, 0.65);
+    }
+    body.dark button.fancy-btn {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(14, 165, 233, 0.35));
+      color: #e0f2fe;
+    }
+    body.dark button:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .tab-btn {
+      padding: 0.65rem 1.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      transition: all 0.25s ease;
+      color: rgba(248, 250, 252, 0.7);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.35), rgba(74, 222, 128, 0.35));
+      color: #e2e8f0;
+      box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
+    }
+    body.light .tab-btn { color: rgba(15, 23, 42, 0.7); }
+    body.light .tab-btn.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(59, 130, 246, 0.25));
+      color: #0f172a;
+    }
+  </style>
+</head>
+
+<body class="dark p-6 relative">
+  <div class="flex justify-end mb-4 relative z-10">
+    <button id="modeToggle"
+      class="px-4 py-2 bg-gradient-to-r from-indigo-400 to-sky-400 text-black font-semibold rounded-lg fancy-btn shadow-md">
+      🌙 Dark Mode
+    </button>
+  </div>
+
+  <header class="text-center mb-12 relative z-10 animate-section">
+    <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
+    <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
+      Paste your milestones → get <span class="text-emerald-300 font-semibold">realistic time-based estimates</span> with smoothing + charts.
+    </p>
+  </header>
+
+  <div class="flex justify-center mb-8 relative z-10">
+    <div class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 p-1">
+      <button id="tabSingle" class="tab-btn active">Single Channel</button>
+      <button id="tabCompare" class="tab-btn">Two Channel Comparison</button>
+    </div>
+  </div>
+
+  <main class="max-w-5xl mx-auto space-y-12 relative z-10">
+    <section id="singleTab" class="space-y-12">
+      <section class="glass animate-section">
+      <h2 class="text-2xl font-semibold mb-4">1. Paste your data</h2>
+      <textarea id="dataInput" rows="6"
+        class="w-full p-4 rounded-xl bg-white/80 text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-indigo-400 transition-all resize-y"
+        placeholder="2025-01-01 10:30:00,1200000
+2025-01-02 12:15:00,1350000
+2025-01-03 14:45:00,1400000"></textarea>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div>
+          <label for="intervalMode" class="font-semibold">Estimation Interval:</label>
+          <select id="intervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="day">Daily</option>
+            <option value="week">Weekly</option>
+            <option value="month">Monthly</option>
+            <option value="hour">Hourly</option>
+            <option value="minute">Minutely</option>
+            <option value="second">Secondly</option>
+          </select>
+        </div>
+        <div>
+          <label for="timeFormat" class="font-semibold">Time Format:</label>
+          <select id="timeFormat" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="12">12-Hour (AM/PM)</option>
+            <option value="24">24-Hour (Military)</option>
+          </select>
+        </div>
+        <div>
+          <label for="timeZone" class="font-semibold">Time Zone:</label>
+          <select id="timeZone" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+            <option value="local">Local System</option>
+            <option value="America/New_York">Eastern (EST)</option>
+            <option value="America/Chicago">Central (CST)</option>
+            <option value="America/Denver">Mountain (MST)</option>
+            <option value="America/Los_Angeles">Pacific (PST)</option>
+          </select>
+        </div>
+
+        <!-- 🔹 New Estimation Strength Slider -->
+        <div class="md:col-span-3">
+          <label for="estimationStrength" class="font-semibold">Estimation Strength:</label>
+          <input id="estimationStrength" type="range" min="0" max="100" step="1" value="50"
+            class="w-full accent-indigo-400 mt-1">
+          <span id="estimationStrengthLabel" class="ml-1 font-semibold text-indigo-300">50%</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mt-4 items-center">
+        <button id="auditToggle"
+          class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+          🔍 Enable Audits
+        </button>
+        <span id="auditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+        <div id="auditInfo" class="popup">
+          Adds small, human-like subscriber fluctuations. Adjust “Intensity” for strength and “Frequency” for occurrence rate.
+        </div>
+
+        <label for="auditStrength" class="font-semibold ml-2">Intensity:</label>
+        <select id="auditStrength" class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+          <option value="0.05">Calm</option>
+          <option value="0.12" selected>Moderate</option>
+          <option value="0.25">Volatile</option>
+        </select>
+
+        <label for="auditFreq" class="font-semibold ml-4">Frequency:</label>
+        <input id="auditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04" class="w-32 accent-emerald-400">
+        <span id="freqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+
+        <button id="randomToggle"
+          class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
+          🎲 Enable Natural Randomization
+        </button>
+        <span id="randomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+        <div id="randomInfo" class="popup">
+          Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
+        </div>
+
+        <label for="randStrength" class="font-semibold ml-2">Strength:</label>
+        <input id="randStrength" type="range" min="0.01" max="0.10" step="0.01" value="0.03" class="w-32 accent-sky-400">
+        <span id="randStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
+      </div>
+
+      <div class="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
+        ⚠️ <span class="text-white font-bold">Audits Feature (Beta)</span><br>
+        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
+        please report them to the HB Statistics developer team for review and improvement.
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <button id="estimateBtn"
+          class="px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+          🚀 Estimate Growth
+        </button>
+        <button id="saveSettingsBtn"
+          class="px-6 py-3 bg-amber-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+          Save Settings
+        </button>
+      </div>
+    </section>
+
+    <section id="resultsSection" class="hidden glass space-y-8 animate-section">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold">2. Estimates</h2>
+        <div class="flex flex-col text-right">
+          <span id="auditStatus" class="text-sm text-emerald-300 font-semibold hidden">? Audits Active</span>
+          <span id="randomStatus" class="text-sm text-sky-300 font-semibold hidden">? Randomization Active</span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table id="resultTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass p-4">
+          <h3 class="font-semibold mb-2">Subscribers</h3>
+          <canvas id="subsChart" class="w-full h-72"></canvas>
+        </div>
+        <div class="glass p-4">
+          <h3 class="font-semibold mb-2">Gains</h3>
+          <canvas id="gainChart" class="w-full h-72"></canvas>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-4">
+        <button id="downloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇️ Download CSV</button>
+        <button id="copyTotalsBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy Totals (Vertical)</button>
+        <button id="copyTotalsHorizBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy Totals (Horizontal)</button>
+        <button id="copyGainsVertBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Vertical)</button>
+        <button id="copyGainsHorizBtn" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy Gains (Horizontal)</button>
+      </div>
+      </section>
+    </section>
+
+    <section id="compareTab" class="hidden space-y-10">
+      <div class="p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
+        ⚠️ <span class="text-white font-bold">Two Channel Comparison (Beta)</span><br>
+        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
+        please report them to the HB Statistics developer team for review and improvement.
+      </div>
+      <section class="glass animate-section">
+        <h2 class="text-2xl font-semibold mb-4">Two Channel Comparison</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="channelNameA" class="font-semibold">Channel A Name</label>
+            <input id="channelNameA" type="text"
+              class="mt-2 w-full px-4 py-2 rounded-xl font-semibold"
+              placeholder="Channel A">
+            <textarea id="dataInputA" rows="6"
+              class="mt-3 w-full p-4 rounded-xl text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-400 transition-all resize-y"
+              placeholder="2025-01-01 10:30:00,1200000
+2025-01-02 12:15:00,1350000
+2025-01-03 14:45:00,1400000"></textarea>
+          </div>
+          <div>
+            <label for="channelNameB" class="font-semibold">Channel B Name</label>
+            <input id="channelNameB" type="text"
+              class="mt-2 w-full px-4 py-2 rounded-xl font-semibold"
+              placeholder="Channel B">
+            <textarea id="dataInputB" rows="6"
+              class="mt-3 w-full p-4 rounded-xl text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-400 transition-all resize-y"
+              placeholder="2025-01-01 10:30:00,800000
+2025-01-02 12:15:00,900000
+2025-01-03 14:45:00,980000"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass animate-section">
+        <h2 class="text-2xl font-semibold mb-4">Comparison Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="compareIntervalMode" class="font-semibold">Estimation Interval:</label>
+            <select id="compareIntervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+              <option value="hour">Hourly</option>
+              <option value="minute">Minutely</option>
+              <option value="second">Secondly</option>
+            </select>
+          </div>
+          <div>
+            <label for="compareTimeFormat" class="font-semibold">Time Format:</label>
+            <select id="compareTimeFormat" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="12">12-Hour (AM/PM)</option>
+              <option value="24">24-Hour (Military)</option>
+            </select>
+          </div>
+          <div>
+            <label for="compareTimeZone" class="font-semibold">Time Zone:</label>
+            <select id="compareTimeZone" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="local">Local System</option>
+              <option value="America/New_York">Eastern (EST)</option>
+              <option value="America/Chicago">Central (CST)</option>
+              <option value="America/Denver">Mountain (MST)</option>
+              <option value="America/Los_Angeles">Pacific (PST)</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-3">
+            <label for="compareEstimationStrength" class="font-semibold">Estimation Strength:</label>
+            <input id="compareEstimationStrength" type="range" min="0" max="100" step="1" value="50"
+              class="w-full accent-indigo-400 mt-1">
+            <span id="compareEstimationStrengthLabel" class="ml-1 font-semibold text-indigo-300">50%</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mt-4 items-center">
+          <button id="compareAuditToggle"
+            class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🔍 Enable Audits
+          </button>
+          <span id="compareAuditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+          <div id="compareAuditInfo" class="popup">
+            Adds small, human-like subscriber fluctuations. Adjust "Intensity" for strength and "Frequency" for occurrence rate.
+          </div>
+
+          <label for="compareAuditStrength" class="font-semibold ml-2">Intensity:</label>
+          <select id="compareAuditStrength" class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+            <option value="0.05">Calm</option>
+            <option value="0.12" selected>Moderate</option>
+            <option value="0.25">Volatile</option>
+          </select>
+
+          <label for="compareAuditFreq" class="font-semibold ml-4">Frequency:</label>
+          <input id="compareAuditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04" class="w-32 accent-emerald-400">
+          <span id="compareFreqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+
+          <button id="compareRandomToggle"
+            class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
+            🎲 Enable Natural Randomization
+          </button>
+          <span id="compareRandomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+          <div id="compareRandomInfo" class="popup">
+            Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
+          </div>
+
+          <label for="compareRandStrength" class="font-semibold ml-2">Strength:</label>
+          <input id="compareRandStrength" type="range" min="0.01" max="0.10" step="0.01" value="0.03" class="w-32 accent-sky-400">
+          <span id="compareRandStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
+        </div>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button id="compareBtn"
+            class="px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🚀 Compare Channels
+          </button>
+          <button id="saveSettingsCompareBtn"
+            class="px-6 py-3 bg-amber-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            Save Settings
+          </button>
+        </div>
+      </section>
+
+      <section id="compareResults" class="hidden glass space-y-6 animate-section">
+        <div class="overflow-x-auto">
+          <table id="compareTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Total Subscribers</h3>
+            <canvas id="compareChart" class="w-full h-96"></canvas>
+          </div>
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Subscriber Gap</h3>
+            <canvas id="compareGapChart" class="w-full h-96"></canvas>
+          </div>
+          <div class="glass p-4">
+            <h3 id="compareGainsTitle" class="font-semibold mb-2">Gains Comparison</h3>
+            <canvas id="compareGainsChart" class="w-full h-96"></canvas>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <button id="compareDownloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇️ Download CSV</button>
+          <button id="copyCompareTotalsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Totals (Vertical)</button>
+          <button id="copyCompareTotalsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Totals (Horizontal)</button>
+          <button id="copyCompareTotalsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Totals (Vertical)</button>
+          <button id="copyCompareTotalsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Totals (Horizontal)</button>
+          <button id="copyCompareGainsAVert" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Gains (Vertical)</button>
+          <button id="copyCompareGainsAHoriz" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">📋 Copy A Gains (Horizontal)</button>
+          <button id="copyCompareGainsBVert" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Gains (Vertical)</button>
+          <button id="copyCompareGainsBHoriz" class="px-6 py-2 bg-sky-300 text-black font-semibold rounded fancy-btn">📋 Copy B Gains (Horizontal)</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast">Copied!</div>
+  <footer class="mt-10 text-center text-sm text-white/70">
+    © HB Statistics 2026
+  </footer>
+
+  <script>
+    const fixedUnitsMs = { day: 86400000, week: 604800000, hour: 3600000, minute: 60000, second: 1000 };
+    const isUtcDateOnlyMode = (mode) => mode === "day" || mode === "week" || mode === "month";
+    const alignToUtcMidnight = (ts) => {
+      const d = new Date(ts);
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    };
+    const addMonthsUtcClamped = (ts, months) => {
+      const d = new Date(ts);
+      const year = d.getUTCFullYear();
+      const month = d.getUTCMonth();
+      const day = d.getUTCDate();
+      const hour = d.getUTCHours();
+      const minute = d.getUTCMinutes();
+      const second = d.getUTCSeconds();
+      const ms = d.getUTCMilliseconds();
+
+      const targetMonthIndex = month + months;
+      const targetYear = year + Math.floor(targetMonthIndex / 12);
+      const targetMonth = ((targetMonthIndex % 12) + 12) % 12;
+      const maxDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+      const targetDay = Math.min(day, maxDay);
+      return Date.UTC(targetYear, targetMonth, targetDay, hour, minute, second, ms);
+    };
+    const stepForward = (ts, mode) => {
+      if (mode === "month") return addMonthsUtcClamped(ts, 1);
+      const step = fixedUnitsMs[mode];
+      if (!step) throw new Error(`Unsupported interval mode: ${mode}`);
+      return ts + step;
+    };
+    const buildTimeline = (startTs, endTs, mode) => {
+      if (!Number.isFinite(startTs) || !Number.isFinite(endTs)) return [];
+      if (endTs < startTs) return [];
+      const timeline = [startTs];
+      if (endTs === startTs) return timeline;
+
+      let t = startTs;
+      let guard = 0;
+      while (t < endTs) {
+        const next = stepForward(t, mode);
+        if (!Number.isFinite(next) || next <= t) throw new Error("Invalid interval stepping; cannot advance timeline.");
+        if (next >= endTs) {
+          if (next !== endTs) timeline.push(endTs);
+          else timeline.push(next);
+          break;
+        }
+        timeline.push(next);
+        t = next;
+        guard++;
+        if (guard > 2000000) throw new Error("Too many intervals; choose a larger estimation interval or shorter date range.");
+      }
+      return timeline;
+    };
+    let currentMode = "dark";
+    let est = [], subsChart = null, gainChart = null, compareChart = null, compareGainChart = null, compareGapChart = null, gainsArr = [];
+    let compareState = null;
+    let compareExport = null;
+    let compareGainsA = [], compareGainsB = [];
+    let auditsEnabled = false, randomizationEnabled = false;
+    let estStrength = 0.5;
+    let lastMode = "day";
+
+    const estSlider = document.getElementById("estimationStrength");
+    const estLabel = document.getElementById("estimationStrengthLabel");
+    const compareEstSlider = document.getElementById("compareEstimationStrength");
+    const compareEstLabel = document.getElementById("compareEstimationStrengthLabel");
+    const setEstStrength = (value) => {
+      estStrength = value;
+      const pct = Math.round(estStrength * 100);
+      estSlider.value = pct;
+      estLabel.textContent = pct + "%";
+      compareEstSlider.value = pct;
+      compareEstLabel.textContent = pct + "%";
+    };
+    estSlider.addEventListener("input", () => setEstStrength(estSlider.value / 100));
+    compareEstSlider.addEventListener("input", () => setEstStrength(compareEstSlider.value / 100));
+
+    const togglePopup = (btnId, popupId) => {
+      const btn = document.getElementById(btnId);
+      const popup = document.getElementById(popupId);
+      if (!btn || !popup) return;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === "block" ? "none" : "block";
+      });
+    };
+    togglePopup("auditInfoBtn", "auditInfo");
+    togglePopup("randomInfoBtn", "randomInfo");
+    togglePopup("compareAuditInfoBtn", "compareAuditInfo");
+    togglePopup("compareRandomInfoBtn", "compareRandomInfo");
+    document.addEventListener("click", () => document.querySelectorAll(".popup").forEach(p => p.style.display = "none"));
+
+    const freqSlider = document.getElementById("auditFreq");
+    const freqLabel = document.getElementById("freqLabel");
+    const randSlider = document.getElementById("randStrength");
+    const randLabel = document.getElementById("randStrengthLabel");
+    const compareFreqSlider = document.getElementById("compareAuditFreq");
+    const compareFreqLabel = document.getElementById("compareFreqLabel");
+    const compareRandSlider = document.getElementById("compareRandStrength");
+    const compareRandLabel = document.getElementById("compareRandStrengthLabel");
+    const auditStrength = document.getElementById("auditStrength");
+    const compareAuditStrength = document.getElementById("compareAuditStrength");
+
+    const setAuditFreq = (value) => {
+      freqSlider.value = value;
+      compareFreqSlider.value = value;
+      freqLabel.textContent = Math.round(value * 100) + "%";
+      compareFreqLabel.textContent = Math.round(value * 100) + "%";
+    };
+    const setRandStrength = (value) => {
+      randSlider.value = value;
+      compareRandSlider.value = value;
+      randLabel.textContent = Math.round(value * 100) + "%";
+      compareRandLabel.textContent = Math.round(value * 100) + "%";
+    };
+    const setAuditStrength = (value) => {
+      auditStrength.value = value;
+      compareAuditStrength.value = value;
+    };
+
+    freqSlider.addEventListener("input", () => setAuditFreq(freqSlider.value));
+    compareFreqSlider.addEventListener("input", () => setAuditFreq(compareFreqSlider.value));
+    randSlider.addEventListener("input", () => setRandStrength(randSlider.value));
+    compareRandSlider.addEventListener("input", () => setRandStrength(compareRandSlider.value));
+    auditStrength.addEventListener("change", () => setAuditStrength(auditStrength.value));
+    compareAuditStrength.addEventListener("change", () => setAuditStrength(compareAuditStrength.value));
+
+    const formatDate = (ts, mode) => {
+      const tz = document.getElementById("timeZone").value;
+      const tf = document.getElementById("timeFormat").value;
+      const base = {
+        year: "numeric", month: "short", day: "2-digit"
+      };
+      if (mode === "month") {
+        return new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", timeZone: "UTC" }).format(new Date(ts));
+      }
+      if (isUtcDateOnlyMode(mode)) {
+        return new Intl.DateTimeFormat(undefined, { ...base, timeZone: "UTC" }).format(new Date(ts));
+      }
+      return new Intl.DateTimeFormat(undefined, {
+        ...base,
+        timeZone: tz === "local" ? undefined : tz,
+        hour12: tf === "12",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      }).format(new Date(ts));
+    };
+
+    document.getElementById("auditToggle").addEventListener("click", e => {
+      auditsEnabled = !auditsEnabled;
+      document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
+      e.target.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+    });
+
+    document.getElementById("randomToggle").addEventListener("click", e => {
+      randomizationEnabled = !randomizationEnabled;
+      document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
+      e.target.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+    });
+
+    const setActiveTab = (tab) => {
+      const single = document.getElementById("singleTab");
+      const compare = document.getElementById("compareTab");
+      const btnSingle = document.getElementById("tabSingle");
+      const btnCompare = document.getElementById("tabCompare");
+      const isSingle = tab === "single";
+      single.classList.toggle("hidden", !isSingle);
+      compare.classList.toggle("hidden", isSingle);
+      btnSingle.classList.toggle("active", isSingle);
+      btnCompare.classList.toggle("active", !isSingle);
+    };
+    document.getElementById("tabSingle").addEventListener("click", () => setActiveTab("single"));
+    document.getElementById("tabCompare").addEventListener("click", () => setActiveTab("compare"));
+
+    const intervalMode = document.getElementById("intervalMode");
+    const compareIntervalMode = document.getElementById("compareIntervalMode");
+    const timeFormat = document.getElementById("timeFormat");
+    const compareTimeFormat = document.getElementById("compareTimeFormat");
+    const timeZone = document.getElementById("timeZone");
+    const compareTimeZone = document.getElementById("compareTimeZone");
+
+    const syncSelect = (source, target) => {
+      if (target.value !== source.value) target.value = source.value;
+    };
+    intervalMode.addEventListener("change", () => syncSelect(intervalMode, compareIntervalMode));
+    compareIntervalMode.addEventListener("change", () => syncSelect(compareIntervalMode, intervalMode));
+    timeFormat.addEventListener("change", () => syncSelect(timeFormat, compareTimeFormat));
+    compareTimeFormat.addEventListener("change", () => {
+      syncSelect(compareTimeFormat, timeFormat);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+    });
+    timeZone.addEventListener("change", () => syncSelect(timeZone, compareTimeZone));
+    compareTimeZone.addEventListener("change", () => {
+      syncSelect(compareTimeZone, timeZone);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+    });
+
+    const compareAuditToggle = document.getElementById("compareAuditToggle");
+    const compareRandomToggle = document.getElementById("compareRandomToggle");
+    const syncAuditToggleText = () => {
+      compareAuditToggle.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+    };
+    const syncRandomToggleText = () => {
+      compareRandomToggle.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+    };
+    document.getElementById("auditToggle").addEventListener("click", () => syncAuditToggleText());
+    document.getElementById("randomToggle").addEventListener("click", () => syncRandomToggleText());
+    compareAuditToggle.addEventListener("click", () => {
+      document.getElementById("auditToggle").click();
+      syncAuditToggleText();
+    });
+    compareRandomToggle.addEventListener("click", () => {
+      document.getElementById("randomToggle").click();
+      syncRandomToggleText();
+    });
+
+    setEstStrength(estStrength);
+    setAuditStrength(auditStrength.value);
+    setAuditFreq(freqSlider.value);
+    setRandStrength(randSlider.value);
+    syncSelect(intervalMode, compareIntervalMode);
+    syncSelect(timeFormat, compareTimeFormat);
+    syncSelect(timeZone, compareTimeZone);
+    syncAuditToggleText();
+    syncRandomToggleText();
+
+    const saveSettings = () => {
+      const payload = {
+        intervalMode: intervalMode.value,
+        timeFormat: timeFormat.value,
+        timeZone: timeZone.value,
+        estStrength: Number(estStrength),
+        auditStrength: auditStrength.value,
+        auditFreq: freqSlider.value,
+        randStrength: randSlider.value,
+        auditsEnabled,
+        randomizationEnabled
+      };
+      localStorage.setItem("autoEstimatorSettings", JSON.stringify(payload));
+      showToast();
+    };
+
+    const loadSettings = () => {
+      const raw = localStorage.getItem("autoEstimatorSettings");
+      if (!raw) return;
+      let settings;
+      try {
+        settings = JSON.parse(raw);
+      } catch {
+        return;
+      }
+      if (settings.intervalMode) {
+        intervalMode.value = settings.intervalMode;
+        syncSelect(intervalMode, compareIntervalMode);
+      }
+      if (settings.timeFormat) {
+        timeFormat.value = settings.timeFormat;
+        syncSelect(timeFormat, compareTimeFormat);
+      }
+      if (settings.timeZone) {
+        timeZone.value = settings.timeZone;
+        syncSelect(timeZone, compareTimeZone);
+      }
+      if (typeof settings.estStrength === "number") setEstStrength(settings.estStrength);
+      if (settings.auditStrength) setAuditStrength(settings.auditStrength);
+      if (settings.auditFreq) setAuditFreq(settings.auditFreq);
+      if (settings.randStrength) setRandStrength(settings.randStrength);
+      if (typeof settings.auditsEnabled === "boolean") {
+        auditsEnabled = settings.auditsEnabled;
+        document.getElementById("auditStatus").classList.toggle("hidden", !auditsEnabled);
+        document.getElementById("auditToggle").textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+      }
+      if (typeof settings.randomizationEnabled === "boolean") {
+        randomizationEnabled = settings.randomizationEnabled;
+        document.getElementById("randomStatus").classList.toggle("hidden", !randomizationEnabled);
+        document.getElementById("randomToggle").textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+      }
+      syncAuditToggleText();
+      syncRandomToggleText();
+    };
+
+    /* === Parse Count === */
+    const parseCount = (r) => {
+      const c = r.replace(/,/g, "").trim().toLowerCase();
+      const m = c.match(/^([\d.]+)([kmb]?)$/);
+      if (!m) return NaN;
+      const num = parseFloat(m[1]);
+      const suffix = m[2];
+      if (randomizationEnabled && suffix)
+        throw new Error("Abbreviated counts (K/M/B) are disabled while Randomization is active.");
+      const multi = { k: 1e3, m: 1e6, b: 1e9 };
+      return Math.round(num * (multi[suffix] || 1));
+    };
+
+    /* === Parse Input === */
+    const parseInput = (r, mode) => {
+      const parseTimestamp = (raw) => {
+        const s = raw.trim();
+        if (!s) return NaN;
+        const numeric = s.match(/^-?\d+(?:\.\d+)?$/);
+        if (numeric) {
+          const n = Number(s);
+          if (!Number.isFinite(n)) return NaN;
+          return Math.abs(n) < 1e12 ? n * 1000 : n;
+        }
+        if (mode === "month") {
+          const mmYYYY = s.match(/^(\d{1,2})[\/-](\d{4})$/);
+          if (mmYYYY) {
+            const m = Number(mmYYYY[1]) - 1;
+            const y = Number(mmYYYY[2]);
+            if (m >= 0 && m <= 11) return Date.UTC(y, m, 1);
+          }
+          const yyyyMM = s.match(/^(\d{4})[\/-](\d{1,2})$/);
+          if (yyyyMM) {
+            const y = Number(yyyyMM[1]);
+            const m = Number(yyyyMM[2]) - 1;
+            if (m >= 0 && m <= 11) return Date.UTC(y, m, 1);
+          }
+        }
+        const extendedYear = s.match(/^(-?\d{5,})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (extendedYear) {
+          const possibleEpoch = Number(extendedYear[1]);
+          if (Number.isFinite(possibleEpoch) && Math.abs(possibleEpoch) < 1e12) {
+            return possibleEpoch * 1000;
+          }
+        }
+        const isoDateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (isoDateOnly) {
+          const y = Number(isoDateOnly[1]);
+          const m = Number(isoDateOnly[2]) - 1;
+          const d = Number(isoDateOnly[3]);
+          return isUtcDateOnlyMode(mode) ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+        }
+        const usDateOnly = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (usDateOnly) {
+          const m = Number(usDateOnly[1]) - 1;
+          const d = Number(usDateOnly[2]);
+          const y = Number(usDateOnly[3]);
+          return isUtcDateOnlyMode(mode) ? Date.UTC(y, m, d) : new Date(y, m, d).getTime();
+        }
+        return Date.parse(s);
+      };
+
+      const splitEntry = (line) => {
+        const commaIndex = line.lastIndexOf(",");
+        if (commaIndex !== -1) {
+          return [line.slice(0, commaIndex), line.slice(commaIndex + 1)];
+        }
+        const parts = line.trim().split(/\s+/);
+        if (parts.length < 2) return [line, ""];
+        const v = parts.pop();
+        return [parts.join(" "), v];
+      };
+
+      const entries = mode === "month"
+        ? r.split(/\s+/)
+        : r.split(/\r?\n/).flatMap(l => l.split(/\t+|\s{2,}/));
+
+      return entries
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(l => {
+          const [d, v] = splitEntry(l);
+          const ts = parseTimestamp(d);
+          if (isNaN(ts)) throw new Error(`Invalid date/time: ${l}`);
+          const count = parseCount(v.trim());
+          if (isNaN(count)) throw new Error(`Invalid count: ${l}`);
+          return { ts, c: count };
+        })
+        .sort((a, b) => a.ts - b.ts);
+    };
+
+    /* === Interpolation (with Strength + Midnight Alignment) === */
+    function interpolate(points, mode) {
+      const output = [];
+
+      for (let i = 0; i < points.length - 1; i++) {
+        const s = points[i], e = points[i + 1];
+        if (e.ts <= s.ts) throw new Error("Timestamps must be strictly increasing.");
+
+        let startTS = s.ts;
+        const totalGain = e.c - s.c;
+
+        // 🎚️ Strength-based variation (0% means no randomness)
+        const variation = estStrength * 0.25;
+
+        // 🕛 Align date-based modes to UTC midnight boundaries
+        if (isUtcDateOnlyMode(mode)) startTS = alignToUtcMidnight(s.ts);
+
+        const timeline = buildTimeline(startTS, e.ts, mode);
+        const steps = Math.max(1, timeline.length - 1);
+        const avgGain = totalGain / steps;
+
+        if (i === 0) output.push({ ts: startTS, c: s.c });
+
+        let acc = 0;
+        let increments = Array.from({ length: steps }, () =>
+          avgGain * (1 + (Math.random() - 0.5) * variation * 2)
+        );
+        const sum = increments.reduce((a, b) => a + b, 0);
+        increments = increments.map(g => (g * totalGain) / sum);
+
+        for (let d = 0; d < steps; d++) {
+          acc += increments[d];
+          const ts = timeline[d + 1] ?? e.ts;
+          const c = d === steps - 1 ? e.c : Math.round(s.c + acc);
+          output.push({ ts, c });
+        }
+      }
+      return output;
+    }
+/* === Audits === */
+    function applyAudits(data) {
+      const intensity = parseFloat(document.getElementById("auditStrength").value);
+      const freq = parseFloat(document.getElementById("auditFreq").value);
+      const out = data.map(r => ({ ...r }));
+      let drift = 0;
+      for (let i = 1; i < out.length; i++) {
+        if (Math.random() < freq) {
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          drift += dir * out[i].c * intensity * 0.0004 * (Math.random() * 0.8 + 0.4);
+        }
+        drift *= 0.92;
+        out[i].c = Math.max(0, out[i].c + Math.round(drift));
+      }
+      return out;
+    }
+
+    /* === Natural Randomization (Never Below API) === */
+    function applyNaturalRandomization(data, original) {
+      const intensity = parseFloat(document.getElementById("randStrength").value);
+      const out = [];
+      let apiIndex = 0;
+
+      for (let i = 0; i < data.length; i++) {
+        if (apiIndex < original.length - 1 && data[i].ts >= original[apiIndex + 1].ts)
+          apiIndex++;
+        const apiBaseline = original[apiIndex].c;
+        const prev = i > 0 ? data[i - 1].c : apiBaseline;
+        const curr = data[i].c;
+        const growth = Math.abs(curr - prev);
+        const range = Math.max(300, growth * intensity);
+        const offset = 150 + Math.random() * 600;
+        const variation = Math.abs((Math.random() - 0.5) * range * 2);
+        const newVal = Math.max(curr + offset, apiBaseline + variation);
+        out.push({ ...data[i], c: Math.round(newVal) });
+      }
+      return out;
+    }
+
+    /* === Table Rendering === */
+    function renderTable(data, mode) {
+      const tbl = document.getElementById("resultTable");
+      lastMode = mode;
+      let h = "<thead><tr><th>Date/Time</th><th>Subscribers</th><th>Gain</th></tr></thead><tbody>";
+      gainsArr = [];
+      data.forEach((r, i) => {
+        const g = i ? r.c - data[i - 1].c : 0;
+        if (i) gainsArr.push(g);
+        const cls = g > 0 ? "text-emerald-300" : g < 0 ? "text-red-400" : "text-white/60";
+        const sign = g > 0 ? "+" : g < 0 ? "-" : "";
+        h += `<tr><td>${formatDate(r.ts, mode)}</td><td>${r.c.toLocaleString()}</td><td class="${cls}">${sign}${Math.abs(g).toLocaleString()}</td></tr>`;
+      });
+      tbl.innerHTML = h + "</tbody>";
+    }
+
+    /* === Charts === */
+    function renderCharts(data, mode) {
+      const labels = data.map(r => formatDate(r.ts, mode));
+      const counts = data.map(r => r.c);
+      subsChart?.destroy();
+      gainChart?.destroy();
+      const txt = currentMode === "dark" ? "#fff" : "#000";
+      subsChart = new Chart(document.getElementById("subsChart"), {
+        type: "line",
+        data: { labels, datasets: [{ label: "Subscribers", data: counts, borderColor: "#4ade80", tension: 0.35, pointRadius: 0 }] },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+      gainChart = new Chart(document.getElementById("gainChart"), {
+        type: "line",
+        data: { labels: labels.slice(1), datasets: [{ label: "Gain", data: gainsArr, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0 }] },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+    }
+
+    function renderCompare(estA, estB, mode, nameA, nameB) {
+      const alignStart = (ts) => {
+        if (!isUtcDateOnlyMode(mode)) return ts;
+        return alignToUtcMidnight(ts);
+      };
+      const start = alignStart(Math.min(estA[0].ts, estB[0].ts));
+      const end = Math.max(estA[estA.length - 1].ts, estB[estB.length - 1].ts);
+      const timeline = buildTimeline(start, end, mode);
+
+      const seriesFrom = (data) => {
+        let idx = 0;
+        let last = null;
+        return timeline.map(t => {
+          while (idx < data.length && data[idx].ts <= t) {
+            last = data[idx].c;
+            idx++;
+          }
+          return last;
+        });
+      };
+
+      const labels = timeline.map(ts => formatDate(ts, mode));
+      const seriesA = seriesFrom(estA);
+      const seriesB = seriesFrom(estB);
+      const txt = currentMode === "dark" ? "#fff" : "#000";
+
+      const gainsA = seriesA.map((v, i) => {
+        if (i === 0 || v === null || seriesA[i - 1] === null) return null;
+        return v - seriesA[i - 1];
+      });
+      const gainsB = seriesB.map((v, i) => {
+        if (i === 0 || v === null || seriesB[i - 1] === null) return null;
+        return v - seriesB[i - 1];
+      });
+      const gapSeries = seriesA.map((v, i) => {
+        const b = seriesB[i];
+        if (v === null || b === null) return null;
+        return v - b;
+      });
+
+      compareChart?.destroy();
+      compareChart = new Chart(document.getElementById("compareChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: nameA, data: seriesA, borderColor: "#facc15", tension: 0.35, pointRadius: 0, spanGaps: true },
+            { label: nameB, data: seriesB, borderColor: "#22d3ee", tension: 0.35, pointRadius: 0, spanGaps: true }
+          ]
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      compareGapChart?.destroy();
+      compareGapChart = new Chart(document.getElementById("compareGapChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "Subscriber Gap", data: gapSeries, borderColor: "#f97316", tension: 0.35, pointRadius: 0, spanGaps: true }
+          ]
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      const gainsTitle = document.getElementById("compareGainsTitle");
+      const intervalName = { day: "Daily", week: "Weekly", month: "Monthly" }[mode] || "Daily";
+      const showIntervalGains = mode === "day" || mode === "week" || mode === "month";
+      if (gainsTitle) gainsTitle.textContent = `${showIntervalGains ? intervalName : "Daily"} Gains Comparison`;
+
+      if (showIntervalGains) {
+        const intervalLabels = labels.slice(1);
+        const intervalGainsA = gainsA.slice(1);
+        const intervalGainsB = gainsB.slice(1);
+        compareGainChart?.destroy();
+        compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
+          type: "line",
+          data: {
+            labels: intervalLabels,
+            datasets: [
+              { label: `${nameA} ${intervalName} Gain`, data: intervalGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
+              { label: `${nameB} ${intervalName} Gain`, data: intervalGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
+            ]
+          },
+          options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+        });
+      } else {
+        const dailyMapA = new Map();
+        const dailyMapB = new Map();
+        timeline.forEach((ts, i) => {
+          const gainA = gainsA[i];
+          const gainB = gainsB[i];
+          const dayKey = new Date(ts).toISOString().slice(0, 10);
+          if (gainA !== null) dailyMapA.set(dayKey, (dailyMapA.get(dayKey) || 0) + gainA);
+          if (gainB !== null) dailyMapB.set(dayKey, (dailyMapB.get(dayKey) || 0) + gainB);
+        });
+        const dayKeys = Array.from(new Set([...dailyMapA.keys(), ...dailyMapB.keys()])).sort();
+        const dailyLabels = dayKeys.map(d => formatDate(new Date(d).getTime(), "day"));
+        const dailyGainsA = dayKeys.map(k => dailyMapA.get(k) ?? null);
+        const dailyGainsB = dayKeys.map(k => dailyMapB.get(k) ?? null);
+
+        compareGainChart?.destroy();
+        compareGainChart = new Chart(document.getElementById("compareGainsChart"), {
+          type: "line",
+          data: {
+            labels: dailyLabels,
+            datasets: [
+              { label: `${nameA} Daily Gain`, data: dailyGainsA, borderColor: "#a3e635", tension: 0.35, pointRadius: 0, spanGaps: true },
+              { label: `${nameB} Daily Gain`, data: dailyGainsB, borderColor: "#38bdf8", tension: 0.35, pointRadius: 0, spanGaps: true }
+            ]
+          },
+          options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+        });
+      }
+
+      const table = document.getElementById("compareTable");
+      let h = `<thead><tr><th>Date/Time</th><th>${nameA} Subs</th><th>${nameA} Gain</th><th>${nameB} Subs</th><th>${nameB} Gain</th><th>Sub Gap</th></tr></thead><tbody>`;
+      labels.forEach((label, i) => {
+        const subA = seriesA[i];
+        const subB = seriesB[i];
+        const gA = gainsA[i];
+        const gB = gainsB[i];
+        const gap = gapSeries[i];
+        const clsA = gA > 0 ? "text-emerald-300" : gA < 0 ? "text-red-400" : "text-white/60";
+        const clsB = gB > 0 ? "text-emerald-300" : gB < 0 ? "text-red-400" : "text-white/60";
+        const clsGap = gap > 0 ? "text-emerald-300" : gap < 0 ? "text-red-400" : "text-white/60";
+        const showSubA = subA === null ? "-" : subA.toLocaleString();
+        const showSubB = subB === null ? "-" : subB.toLocaleString();
+        const showGA = gA === null ? "-" : `${gA > 0 ? "+" : gA < 0 ? "-" : ""}${Math.abs(gA).toLocaleString()}`;
+        const showGB = gB === null ? "-" : `${gB > 0 ? "+" : gB < 0 ? "-" : ""}${Math.abs(gB).toLocaleString()}`;
+        const showGap = gap === null ? "-" : `${gap > 0 ? "+" : gap < 0 ? "-" : ""}${Math.abs(gap).toLocaleString()}`;
+        h += `<tr><td>${label}</td><td>${showSubA}</td><td class="${clsA}">${showGA}</td><td>${showSubB}</td><td class="${clsB}">${showGB}</td><td class="${clsGap}">${showGap}</td></tr>`;
+      });
+      table.innerHTML = h + "</tbody>";
+
+      compareGainsA = gainsA.filter(g => g !== null);
+      compareGainsB = gainsB.filter(g => g !== null);
+      compareExport = { labels, seriesA, seriesB, gainsA, gainsB, gapSeries, nameA, nameB };
+      document.getElementById("copyCompareTotalsAVert").textContent = `📋 Copy ${nameA} Totals (Vertical)`;
+      document.getElementById("copyCompareTotalsAHoriz").textContent = `📋 Copy ${nameA} Totals (Horizontal)`;
+      document.getElementById("copyCompareTotalsBVert").textContent = `📋 Copy ${nameB} Totals (Vertical)`;
+      document.getElementById("copyCompareTotalsBHoriz").textContent = `📋 Copy ${nameB} Totals (Horizontal)`;
+      document.getElementById("copyCompareGainsAVert").textContent = `📋 Copy ${nameA} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsAHoriz").textContent = `📋 Copy ${nameA} Gains (Horizontal)`;
+      document.getElementById("copyCompareGainsBVert").textContent = `📋 Copy ${nameB} Gains (Vertical)`;
+      document.getElementById("copyCompareGainsBHoriz").textContent = `📋 Copy ${nameB} Gains (Horizontal)`;
+    }
+
+    /* === Copy + CSV === */
+    const showToast = () => {
+      const t = document.getElementById("toast");
+      t.classList.add("show");
+      clearTimeout(window.toastTimeout);
+      window.toastTimeout = setTimeout(() => t.classList.remove("show"), 1500);
+    };
+    const copyText = (text) => navigator.clipboard.writeText(text).then(showToast);
+    const buildTotalsText = (data, mode) => {
+      if (!data.length) return "";
+      const start = data[0].c;
+      const end = data[data.length - 1].c;
+      const steps = Math.max(1, data.length - 1);
+      const totalGain = end - start;
+      const avgGain = totalGain / steps;
+      const unit = { day: "day", week: "week", month: "month", hour: "hour", minute: "minute", second: "second" }[mode] || mode;
+      const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      return [
+        `Start Subscribers: ${fmt(start)}`,
+        `End Subscribers: ${fmt(end)}`,
+        `Total Gain: ${fmt(totalGain)}`,
+        `Average Gain per ${unit}: ${fmt(avgGain)}`,
+        `Intervals: ${steps.toLocaleString()}`
+      ].join("\n");
+    };
+
+    function downloadCSV(data, mode) {
+      const csv = [["Date/Time", "Subscribers", "Gain"], ...data.map((r, i) => [formatDate(r.ts, mode), r.c, i ? r.c - data[i - 1].c : 0])]
+        .map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "subscriber-estimates.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function downloadCompareCSV() {
+      if (!compareExport) return;
+      const { labels, seriesA, seriesB, gainsA, gainsB, gapSeries, nameA, nameB } = compareExport;
+      const rows = labels.map((label, i) => [
+        label,
+        seriesA[i] === null ? "" : seriesA[i],
+        gainsA[i] === null ? "" : gainsA[i],
+        seriesB[i] === null ? "" : seriesB[i],
+        gainsB[i] === null ? "" : gainsB[i],
+        gapSeries[i] === null ? "" : gapSeries[i]
+      ]);
+      const csv = [[
+        "Date/Time",
+        `${nameA} Subscribers`,
+        `${nameA} Gain`,
+        `${nameB} Subscribers`,
+        `${nameB} Gain`,
+        "Sub Gap"
+      ], ...rows].map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "comparison-estimates.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    /* === Mode Toggle === */
+    document.getElementById("modeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+      currentMode = document.body.classList.contains("dark") ? "dark" : "light";
+      if (est.length) renderCharts(est, lastMode);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+    });
+
+    /* === Main Execution === */
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSettings();
+      document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
+      document.getElementById("saveSettingsCompareBtn").addEventListener("click", saveSettings);
+      document.getElementById("estimateBtn").addEventListener("click", () => {
+        const val = document.getElementById("dataInput").value;
+        const mode = document.getElementById("intervalMode").value;
+        if (!val.trim()) return alert("Enter data first.");
+        let pts;
+        try {
+          pts = parseInput(val, mode);
+          if (pts.length < 2) return alert("Need at least two points.");
+        } catch (e) { return alert(e.message); }
+
+        try {
+          let estd = interpolate(pts, mode);
+          if (auditsEnabled) estd = applyAudits(estd);
+          if (randomizationEnabled) estd = applyNaturalRandomization(estd, pts);
+          est = estd;
+          renderTable(estd, mode);
+          renderCharts(estd, mode);
+          document.getElementById("resultsSection").classList.remove("hidden");
+        } catch (e) { alert(e.message); }
+      });
+
+      document.getElementById("compareBtn").addEventListener("click", () => {
+        const rawA = document.getElementById("dataInputA").value;
+        const rawB = document.getElementById("dataInputB").value;
+        const nameA = document.getElementById("channelNameA").value.trim() || "Channel A";
+        const nameB = document.getElementById("channelNameB").value.trim() || "Channel B";
+        const mode = document.getElementById("intervalMode").value;
+        if (!rawA.trim() || !rawB.trim()) return alert("Enter data for both channels.");
+        let ptsA, ptsB;
+        try {
+          ptsA = parseInput(rawA, mode);
+          ptsB = parseInput(rawB, mode);
+          if (ptsA.length < 2 || ptsB.length < 2) return alert("Each channel needs at least two points.");
+        } catch (e) { return alert(e.message); }
+
+        try {
+          let estA = interpolate(ptsA, mode);
+          let estB = interpolate(ptsB, mode);
+          if (auditsEnabled) {
+            estA = applyAudits(estA);
+            estB = applyAudits(estB);
+          }
+          if (randomizationEnabled) {
+            estA = applyNaturalRandomization(estA, ptsA);
+            estB = applyNaturalRandomization(estB, ptsB);
+          }
+          compareState = { estA, estB, mode, nameA, nameB };
+          renderCompare(estA, estB, mode, nameA, nameB);
+          document.getElementById("compareResults").classList.remove("hidden");
+        } catch (e) { alert(e.message); }
+      });
+
+      document.getElementById("compareDownloadBtn").addEventListener("click", () => {
+        downloadCompareCSV();
+      });
+
+      document.getElementById("copyCompareGainsAVert").addEventListener("click", () => {
+        if (!compareGainsA.length) return;
+        copyText(compareGainsA.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareGainsAHoriz").addEventListener("click", () => {
+        if (!compareGainsA.length) return;
+        copyText(compareGainsA.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyCompareTotalsAVert").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesA.filter(v => v !== null).map(v => v.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareTotalsAHoriz").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesA.filter(v => v !== null).map(v => v.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyCompareGainsBVert").addEventListener("click", () => {
+        if (!compareGainsB.length) return;
+        copyText(compareGainsB.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareGainsBHoriz").addEventListener("click", () => {
+        if (!compareGainsB.length) return;
+        copyText(compareGainsB.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyCompareTotalsBVert").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesB.filter(v => v !== null).map(v => v.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyCompareTotalsBHoriz").addEventListener("click", () => {
+        if (!compareExport) return;
+        copyText(compareExport.seriesB.filter(v => v !== null).map(v => v.toLocaleString()).join("\t"));
+      });
+
+      document.getElementById("copyGainsVertBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(gainsArr.map(g => g.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyGainsHorizBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(gainsArr.map(g => g.toLocaleString()).join("\t"));
+      });
+      document.getElementById("copyTotalsBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(est.map(r => r.c.toLocaleString()).join("\n"));
+      });
+      document.getElementById("copyTotalsHorizBtn").addEventListener("click", () => {
+        if (!est.length) return;
+        copyText(est.map(r => r.c.toLocaleString()).join("\t"));
+      });
+      document.getElementById("downloadBtn").addEventListener("click", () => {
+        if (est.length) downloadCSV(est, document.getElementById("intervalMode").value);
+      });
+      ["timeFormat", "timeZone"].forEach(id =>
+        document.getElementById(id).addEventListener("change", () => {
+          if (est.length) renderTable(est, document.getElementById("intervalMode").value);
+          if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+        })
+      );
+    });
+  </script>
+</body>
+</html>
