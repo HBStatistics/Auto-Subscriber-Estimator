@@ -939,143 +939,25 @@
       return out;
     }
 
-    /* === Natural Randomization === */
+    /* === Natural Randomization (Never Below API) === */
     function applyNaturalRandomization(data, original) {
-      const sliderValue = document.getElementById("randStrength")?.value;
-      const intensity = Number.isFinite(Number(sliderValue)) ? Number(sliderValue) : 0.03;
-      if (!data.length || original.length < 2) return data.map(r => ({ ...r }));
+      const intensity = parseFloat(document.getElementById("randStrength").value);
+      const out = [];
+      let apiIndex = 0;
 
-      const out = data.map(r => ({ ...r }));
-      let dataIndex = 0;
-
-      for (let seg = 0; seg < original.length - 1; seg++) {
-        const start = original[seg];
-        const end = original[seg + 1];
-        const segmentStartIndex = dataIndex;
-
-        while (dataIndex < out.length - 1 && out[dataIndex].ts < end.ts) dataIndex++;
-
-        const segmentEndIndex = dataIndex;
-        const steps = segmentEndIndex - segmentStartIndex;
-        const totalGain = end.c - start.c;
-        if (steps <= 0 || !out[segmentStartIndex]) {
-          out[segmentStartIndex].c = start.c;
-          continue;
-        }
-
-        const carriedStart = seg === 0 ? start.c : out[segmentStartIndex].c;
-        const positiveLeadBase = totalGain > 0
-          ? Math.max(18, Math.round((Math.abs(totalGain) / steps) * (0.18 + intensity * 1.1)))
-          : 0;
-        const negativeLeadBase = totalGain < 0
-          ? Math.max(18, Math.round((Math.abs(totalGain) / steps) * (0.18 + intensity * 1.1)))
-          : 0;
-        const startLead = totalGain > 0
-          ? Math.max(carriedStart - start.c, Math.round(positiveLeadBase * 0.55))
-          : 0;
-        const startDropLead = totalGain < 0
-          ? Math.max(start.c - carriedStart, Math.round(negativeLeadBase * 0.55))
-          : 0;
-
-        out[segmentStartIndex].c = totalGain > 0
-          ? Math.max(carriedStart, start.c + startLead)
-          : totalGain < 0
-            ? Math.min(carriedStart, start.c - startDropLead)
-            : start.c;
-        if (totalGain === 0) {
-          for (let i = segmentStartIndex + 1; i <= segmentEndIndex; i++) out[i].c = start.c;
-          continue;
-        }
-
-        const targetEnd = totalGain > 0
-          ? end.c + positiveLeadBase
-          : totalGain < 0
-            ? end.c - negativeLeadBase
-            : end.c;
-        const segmentNetChange = targetEnd - out[segmentStartIndex].c;
-        const direction = Math.sign(segmentNetChange);
-        const baseMagnitudes = [];
-        for (let i = 0; i < steps; i++) {
-          const left = data[segmentStartIndex + i];
-          const right = data[segmentStartIndex + i + 1];
-          const baselineGain = right && left ? right.c - left.c : segmentNetChange / steps;
-          const baselineMagnitude = Math.max(1, Math.abs(baselineGain));
-          const jitter = 1 + ((Math.random() - 0.5) * 2 * intensity * 2.5);
-          const progress = steps === 1 ? 1 : i / (steps - 1);
-          const trendBias = segmentNetChange > 0
-            ? 1.28 - (progress * 0.4)
-            : segmentNetChange < 0
-              ? 0.92 + (progress * 0.28)
-              : 1;
-          const weight = baselineMagnitude * jitter * trendBias;
-          baseMagnitudes.push(Number.isFinite(weight) ? Math.max(0.2, weight) : 1);
-        }
-
-        const totalAbsGain = Math.abs(segmentNetChange);
-        const weightSum = baseMagnitudes.reduce((sum, n) => sum + n, 0) || steps;
-        let allocated = 0;
-        for (let i = 0; i < steps; i++) {
-          const remaining = totalAbsGain - allocated;
-          const isLast = i === steps - 1;
-          const slice = isLast
-            ? remaining
-            : Math.max(0, Math.round((baseMagnitudes[i] / weightSum) * totalAbsGain));
-          const delta = Math.min(remaining, slice);
-          allocated += delta;
-          out[segmentStartIndex + i + 1].c = out[segmentStartIndex + i].c + (delta * direction);
-        }
-
-        out[segmentEndIndex].c = targetEnd;
-
-        // If the original milestones are monotonic growth, never invent dips inside the segment.
-        if (totalGain > 0) {
-          const avgStepGain = Math.max(1, segmentNetChange / steps);
-          for (let i = segmentStartIndex + 1; i <= segmentEndIndex; i++) {
-            out[i].c = Math.max(out[i].c, out[i - 1].c);
-          }
-          for (let i = segmentStartIndex + 1; i < segmentEndIndex; i++) {
-            const progress = (i - segmentStartIndex) / steps;
-            const linearBaseline = Math.round(start.c + (totalGain * progress));
-            const leadFloor = Math.round(startLead + ((positiveLeadBase - startLead) * progress));
-            const lead = Math.max(leadFloor, Math.round(avgStepGain * (0.35 + intensity * 0.9) * (1 - progress)));
-            out[i].c = Math.max(out[i].c, Math.min(targetEnd - 1, linearBaseline + lead));
-          }
-          for (let i = segmentEndIndex - 1; i > segmentStartIndex; i--) {
-            out[i].c = Math.min(out[i].c, out[i + 1]);
-          }
-          for (let i = segmentStartIndex + 1; i <= segmentEndIndex; i++) {
-            out[i].c = Math.max(out[i].c, out[i - 1].c);
-          }
-          out[segmentEndIndex].c = Math.max(end.c + 1, targetEnd);
-        }
-
-        // If the original milestones decline, keep the randomization directional instead of oscillating.
-        if (totalGain < 0) {
-          const avgStepDrop = Math.max(1, Math.abs(segmentNetChange) / steps);
-          for (let i = segmentStartIndex + 1; i <= segmentEndIndex; i++) {
-            out[i].c = Math.min(out[i].c, out[i - 1].c);
-          }
-          for (let i = segmentStartIndex + 1; i < segmentEndIndex; i++) {
-            const progress = (i - segmentStartIndex) / steps;
-            const linearBaseline = Math.round(start.c + (totalGain * progress));
-            const dropFloor = Math.round(startDropLead + ((negativeLeadBase - startDropLead) * progress));
-            const drop = Math.max(dropFloor, Math.round(avgStepDrop * (0.35 + intensity * 0.9) * (1 - progress)));
-            out[i].c = Math.min(out[i].c, Math.max(targetEnd + 1, linearBaseline - drop));
-          }
-          for (let i = segmentEndIndex - 1; i > segmentStartIndex; i--) {
-            out[i].c = Math.max(out[i].c, out[i + 1]);
-          }
-          for (let i = segmentStartIndex + 1; i <= segmentEndIndex; i++) {
-            out[i].c = Math.min(out[i].c, out[i - 1].c);
-          }
-          out[segmentEndIndex].c = Math.min(end.c - 1, targetEnd);
-        }
+      for (let i = 0; i < data.length; i++) {
+        if (apiIndex < original.length - 1 && data[i].ts >= original[apiIndex + 1].ts)
+          apiIndex++;
+        const apiBaseline = original[apiIndex].c;
+        const prev = i > 0 ? data[i - 1].c : apiBaseline;
+        const curr = data[i].c;
+        const growth = Math.abs(curr - prev);
+        const range = Math.max(300, growth * intensity);
+        const offset = 150 + Math.random() * 600;
+        const variation = Math.abs((Math.random() - 0.5) * range * 2);
+        const newVal = Math.max(curr + offset, apiBaseline + variation);
+        out.push({ ...data[i], c: Math.round(newVal) });
       }
-
-      for (let i = 0; i < out.length; i++) {
-        if (!Number.isFinite(out[i].c)) out[i].c = Number.isFinite(data[i]?.c) ? data[i].c : 0;
-      }
-
       return out;
     }
 
@@ -1458,3 +1340,4 @@
   </script>
 </body>
 </html>
+
