@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -192,6 +191,12 @@
     </button>
   </div>
 
+  <div class="max-w-5xl mx-auto mb-8 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner relative z-10">
+    ⚠️ <span class="text-white font-bold">Auto Subscriber Estimator Site (Beta)</span><br>
+    This site is currently in beta testing. If you encounter any glitches or unusual behavior,
+    please report them to the HB Statistics developer team for review and improvement.
+  </div>
+
   <header class="text-center mb-12 relative z-10 animate-section">
     <h1 class="text-5xl font-extrabold drop-shadow underline-glow">HB Statistics</h1>
     <p class="text-lg mt-3 text-white/80 max-w-2xl mx-auto">
@@ -203,6 +208,7 @@
     <div class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 p-1">
       <button id="tabSingle" class="tab-btn active">Single Channel</button>
       <button id="tabCompare" class="tab-btn">Two Channel Comparison</button>
+      <button id="tabMultiCompare" class="tab-btn">Multi-Channel Comparison</button>
     </div>
   </div>
 
@@ -290,12 +296,6 @@
         <span id="randStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
       </div>
 
-      <div class="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
-        ⚠️ <span class="text-white font-bold">Audits Feature (Beta)</span><br>
-        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
-        please report them to the HB Statistics developer team for review and improvement.
-      </div>
-
       <div class="mt-6 flex flex-wrap gap-3">
         <button id="estimateBtn"
           class="px-8 py-3 bg-gradient-to-r from-emerald-400 to-sky-400 text-black font-bold rounded-xl fancy-btn shadow-md">
@@ -343,11 +343,6 @@
     </section>
 
     <section id="compareTab" class="hidden space-y-10">
-      <div class="p-3 rounded-xl bg-gradient-to-r from-amber-200/40 to-amber-100/30 text-amber-300 font-semibold text-sm backdrop-blur-sm border border-amber-300/40 shadow-inner">
-        ⚠️ <span class="text-white font-bold">Two Channel Comparison (Beta)</span><br>
-        This feature is currently in beta testing. If you encounter any glitches or unusual behavior,
-        please report them to the HB Statistics developer team for review and improvement.
-      </div>
       <section class="glass animate-section">
         <h2 class="text-2xl font-semibold mb-4">Two Channel Comparison</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -493,6 +488,122 @@
         </div>
       </section>
     </section>
+
+    <section id="multiCompareTab" class="hidden space-y-10">
+      <section class="glass animate-section">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <h2 class="text-2xl font-semibold">Multi-Channel Comparison</h2>
+          <button id="addMultiChannelBtn"
+            class="px-5 py-2 bg-gradient-to-r from-emerald-300 to-sky-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            + Add Channel
+          </button>
+        </div>
+        <div id="multiChannelList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      </section>
+
+      <section class="glass animate-section">
+        <h2 class="text-2xl font-semibold mb-4">Comparison Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label for="multiIntervalMode" class="font-semibold">Estimation Interval:</label>
+            <select id="multiIntervalMode" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+              <option value="hour">Hourly</option>
+              <option value="minute">Minutely</option>
+              <option value="second">Secondly</option>
+            </select>
+          </div>
+          <div>
+            <label for="multiTimeFormat" class="font-semibold">Time Format:</label>
+            <select id="multiTimeFormat" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="12">12-Hour (AM/PM)</option>
+              <option value="24">24-Hour (Military)</option>
+            </select>
+          </div>
+          <div>
+            <label for="multiTimeZone" class="font-semibold">Time Zone:</label>
+            <select id="multiTimeZone" class="ml-2 px-3 py-2 rounded-lg bg-white/90 text-black font-semibold w-full">
+              <option value="local">Local System</option>
+              <option value="America/New_York">Eastern (EST)</option>
+              <option value="America/Chicago">Central (CST)</option>
+              <option value="America/Denver">Mountain (MST)</option>
+              <option value="America/Los_Angeles">Pacific (PST)</option>
+            </select>
+          </div>
+          <div class="md:col-span-3">
+            <label for="multiEstimationStrength" class="font-semibold">Estimation Strength:</label>
+            <input id="multiEstimationStrength" type="range" min="0" max="100" step="1" value="50"
+              class="w-full accent-indigo-400 mt-1">
+            <span id="multiEstimationStrengthLabel" class="ml-1 font-semibold text-indigo-300">50%</span>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-4 mb-6 items-center">
+          <button id="multiAuditToggle"
+            class="px-6 py-2 bg-gradient-to-r from-rose-400 to-fuchsia-400 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🔍 Enable Audits
+          </button>
+          <span id="multiAuditInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+          <div id="multiAuditInfo" class="popup">
+            Adds small, human-like subscriber fluctuations. Adjust "Intensity" for strength and "Frequency" for occurrence rate.
+          </div>
+
+          <label for="multiAuditStrength" class="font-semibold ml-2">Intensity:</label>
+          <select id="multiAuditStrength" class="px-3 py-2 rounded-lg bg-white/90 text-black font-semibold">
+            <option value="0.05">Calm</option>
+            <option value="0.12" selected>Moderate</option>
+            <option value="0.25">Volatile</option>
+          </select>
+
+          <label for="multiAuditFreq" class="font-semibold ml-4">Frequency:</label>
+          <input id="multiAuditFreq" type="range" min="0.01" max="0.10" step="0.01" value="0.04" class="w-32 accent-emerald-400">
+          <span id="multiFreqLabel" class="ml-1 font-semibold text-emerald-300">4%</span>
+
+          <button id="multiRandomToggle"
+            class="px-6 py-2 bg-gradient-to-r from-emerald-300 to-teal-300 text-black font-bold rounded-xl fancy-btn shadow-md ml-4">
+            🎲 Enable Natural Randomization
+          </button>
+          <span id="multiRandomInfoBtn" class="cursor-pointer text-sky-300 text-lg ml-1">?</span>
+          <div id="multiRandomInfo" class="popup">
+            Keeps all estimates slightly ahead of API data (a few hundred higher) for natural realism.
+          </div>
+
+          <label for="multiRandStrength" class="font-semibold ml-2">Strength:</label>
+          <input id="multiRandStrength" type="range" min="0.01" max="0.10" step="0.01" value="0.03" class="w-32 accent-sky-400">
+          <span id="multiRandStrengthLabel" class="ml-1 font-semibold text-sky-300">3%</span>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button id="multiCompareBtn"
+            class="px-8 py-3 bg-gradient-to-r from-amber-300 to-emerald-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            🚀 Compare All Channels
+          </button>
+          <button id="saveSettingsMultiBtn"
+            class="px-6 py-3 bg-amber-300 text-black font-bold rounded-xl fancy-btn shadow-md">
+            Save Settings
+          </button>
+        </div>
+      </section>
+
+      <section id="multiCompareResults" class="hidden glass space-y-6 animate-section">
+        <div class="overflow-x-auto">
+          <table id="multiCompareTable" class="min-w-full text-sm text-left border-collapse shadow-lg"></table>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass p-4">
+            <h3 class="font-semibold mb-2">Total Subscribers</h3>
+            <canvas id="multiCompareChart" class="w-full h-96"></canvas>
+          </div>
+          <div class="glass p-4">
+            <h3 id="multiCompareGainsTitle" class="font-semibold mb-2">Gains Comparison</h3>
+            <canvas id="multiCompareGainsChart" class="w-full h-96"></canvas>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <button id="multiCompareDownloadBtn" class="px-6 py-2 bg-amber-300 text-black font-semibold rounded fancy-btn">⬇️ Download CSV</button>
+        </div>
+      </section>
+    </section>
   </main>
 
   <div id="toast">Copied!</div>
@@ -554,10 +665,13 @@
       return timeline;
     };
     let currentMode = "dark";
-    let est = [], subsChart = null, gainChart = null, compareChart = null, compareGainChart = null, compareGapChart = null, gainsArr = [];
+    let est = [], subsChart = null, gainChart = null, compareChart = null, compareGainChart = null, compareGapChart = null, multiCompareChart = null, multiCompareGainChart = null, gainsArr = [];
     let compareState = null;
     let compareExport = null;
     let compareGainsA = [], compareGainsB = [];
+    let multiCompareState = null;
+    let multiCompareExport = null;
+    let multiChannelCount = 0;
     let auditsEnabled = false, randomizationEnabled = false;
     let estStrength = 0.5;
     let lastMode = "day";
@@ -566,6 +680,8 @@
     const estLabel = document.getElementById("estimationStrengthLabel");
     const compareEstSlider = document.getElementById("compareEstimationStrength");
     const compareEstLabel = document.getElementById("compareEstimationStrengthLabel");
+    const multiEstSlider = document.getElementById("multiEstimationStrength");
+    const multiEstLabel = document.getElementById("multiEstimationStrengthLabel");
     const setEstStrength = (value) => {
       estStrength = value;
       const pct = Math.round(estStrength * 100);
@@ -573,9 +689,12 @@
       estLabel.textContent = pct + "%";
       compareEstSlider.value = pct;
       compareEstLabel.textContent = pct + "%";
+      multiEstSlider.value = pct;
+      multiEstLabel.textContent = pct + "%";
     };
     estSlider.addEventListener("input", () => setEstStrength(estSlider.value / 100));
     compareEstSlider.addEventListener("input", () => setEstStrength(compareEstSlider.value / 100));
+    multiEstSlider.addEventListener("input", () => setEstStrength(multiEstSlider.value / 100));
 
     const togglePopup = (btnId, popupId) => {
       const btn = document.getElementById(btnId);
@@ -590,7 +709,39 @@
     togglePopup("randomInfoBtn", "randomInfo");
     togglePopup("compareAuditInfoBtn", "compareAuditInfo");
     togglePopup("compareRandomInfoBtn", "compareRandomInfo");
+    togglePopup("multiAuditInfoBtn", "multiAuditInfo");
+    togglePopup("multiRandomInfoBtn", "multiRandomInfo");
     document.addEventListener("click", () => document.querySelectorAll(".popup").forEach(p => p.style.display = "none"));
+
+    const multiColors = ["#facc15", "#22d3ee", "#a3e635", "#fb7185", "#c084fc", "#f97316", "#2dd4bf", "#60a5fa", "#e879f9", "#34d399"];
+
+    const createMultiChannelCard = (name = "", data = "") => {
+      multiChannelCount++;
+      const id = multiChannelCount;
+      const card = document.createElement("div");
+      card.className = "multi-channel-card rounded-2xl border border-white/10 bg-white/5 p-4";
+      card.dataset.channelId = id;
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-3">
+          <label for="multiChannelName${id}" class="font-semibold">Channel Name</label>
+          <button type="button" class="removeMultiChannel px-3 py-1 bg-rose-300 text-black font-semibold rounded-lg fancy-btn">Remove</button>
+        </div>
+        <input id="multiChannelName${id}" type="text"
+          class="multi-channel-name mt-2 w-full px-4 py-2 rounded-xl font-semibold"
+          placeholder="Channel ${id}" value="${name.replace(/"/g, "&quot;")}">
+        <textarea rows="6"
+          class="multi-channel-data mt-3 w-full p-4 rounded-xl text-black font-mono text-lg shadow-md focus:outline-none focus:ring-4 focus:ring-sky-400 transition-all resize-y"
+          placeholder="2025-01-01 10:30:00,1200000
+2025-01-02 12:15:00,1350000
+2025-01-03 14:45:00,1400000">${data}</textarea>
+      `;
+      card.querySelector(".removeMultiChannel").addEventListener("click", () => {
+        const cards = document.querySelectorAll(".multi-channel-card");
+        if (cards.length <= 2) return alert("Keep at least two channels to compare.");
+        card.remove();
+      });
+      document.getElementById("multiChannelList").appendChild(card);
+    };
 
     const freqSlider = document.getElementById("auditFreq");
     const freqLabel = document.getElementById("freqLabel");
@@ -598,34 +749,47 @@
     const randLabel = document.getElementById("randStrengthLabel");
     const compareFreqSlider = document.getElementById("compareAuditFreq");
     const compareFreqLabel = document.getElementById("compareFreqLabel");
+    const multiFreqSlider = document.getElementById("multiAuditFreq");
+    const multiFreqLabel = document.getElementById("multiFreqLabel");
     const compareRandSlider = document.getElementById("compareRandStrength");
     const compareRandLabel = document.getElementById("compareRandStrengthLabel");
+    const multiRandSlider = document.getElementById("multiRandStrength");
+    const multiRandLabel = document.getElementById("multiRandStrengthLabel");
     const auditStrength = document.getElementById("auditStrength");
     const compareAuditStrength = document.getElementById("compareAuditStrength");
+    const multiAuditStrength = document.getElementById("multiAuditStrength");
 
     const setAuditFreq = (value) => {
       freqSlider.value = value;
       compareFreqSlider.value = value;
+      multiFreqSlider.value = value;
       freqLabel.textContent = Math.round(value * 100) + "%";
       compareFreqLabel.textContent = Math.round(value * 100) + "%";
+      multiFreqLabel.textContent = Math.round(value * 100) + "%";
     };
     const setRandStrength = (value) => {
       randSlider.value = value;
       compareRandSlider.value = value;
+      multiRandSlider.value = value;
       randLabel.textContent = Math.round(value * 100) + "%";
       compareRandLabel.textContent = Math.round(value * 100) + "%";
+      multiRandLabel.textContent = Math.round(value * 100) + "%";
     };
     const setAuditStrength = (value) => {
       auditStrength.value = value;
       compareAuditStrength.value = value;
+      multiAuditStrength.value = value;
     };
 
     freqSlider.addEventListener("input", () => setAuditFreq(freqSlider.value));
     compareFreqSlider.addEventListener("input", () => setAuditFreq(compareFreqSlider.value));
+    multiFreqSlider.addEventListener("input", () => setAuditFreq(multiFreqSlider.value));
     randSlider.addEventListener("input", () => setRandStrength(randSlider.value));
     compareRandSlider.addEventListener("input", () => setRandStrength(compareRandSlider.value));
+    multiRandSlider.addEventListener("input", () => setRandStrength(multiRandSlider.value));
     auditStrength.addEventListener("change", () => setAuditStrength(auditStrength.value));
     compareAuditStrength.addEventListener("change", () => setAuditStrength(compareAuditStrength.value));
+    multiAuditStrength.addEventListener("change", () => setAuditStrength(multiAuditStrength.value));
 
     const formatDate = (ts, mode) => {
       const tz = document.getElementById("timeZone").value;
@@ -662,49 +826,79 @@
     const setActiveTab = (tab) => {
       const single = document.getElementById("singleTab");
       const compare = document.getElementById("compareTab");
+      const multiCompare = document.getElementById("multiCompareTab");
       const btnSingle = document.getElementById("tabSingle");
       const btnCompare = document.getElementById("tabCompare");
+      const btnMultiCompare = document.getElementById("tabMultiCompare");
       const isSingle = tab === "single";
+      const isCompare = tab === "compare";
+      const isMultiCompare = tab === "multi";
       single.classList.toggle("hidden", !isSingle);
-      compare.classList.toggle("hidden", isSingle);
+      compare.classList.toggle("hidden", !isCompare);
+      multiCompare.classList.toggle("hidden", !isMultiCompare);
       btnSingle.classList.toggle("active", isSingle);
-      btnCompare.classList.toggle("active", !isSingle);
+      btnCompare.classList.toggle("active", isCompare);
+      btnMultiCompare.classList.toggle("active", isMultiCompare);
     };
     document.getElementById("tabSingle").addEventListener("click", () => setActiveTab("single"));
     document.getElementById("tabCompare").addEventListener("click", () => setActiveTab("compare"));
+    document.getElementById("tabMultiCompare").addEventListener("click", () => setActiveTab("multi"));
 
     const intervalMode = document.getElementById("intervalMode");
     const compareIntervalMode = document.getElementById("compareIntervalMode");
+    const multiIntervalMode = document.getElementById("multiIntervalMode");
     const timeFormat = document.getElementById("timeFormat");
     const compareTimeFormat = document.getElementById("compareTimeFormat");
+    const multiTimeFormat = document.getElementById("multiTimeFormat");
     const timeZone = document.getElementById("timeZone");
     const compareTimeZone = document.getElementById("compareTimeZone");
+    const multiTimeZone = document.getElementById("multiTimeZone");
 
     const syncSelect = (source, target) => {
       if (target.value !== source.value) target.value = source.value;
     };
-    intervalMode.addEventListener("change", () => syncSelect(intervalMode, compareIntervalMode));
-    compareIntervalMode.addEventListener("change", () => syncSelect(compareIntervalMode, intervalMode));
-    timeFormat.addEventListener("change", () => syncSelect(timeFormat, compareTimeFormat));
+    const syncSelectGroup = (source, targets) => targets.forEach(target => syncSelect(source, target));
+    intervalMode.addEventListener("change", () => syncSelectGroup(intervalMode, [compareIntervalMode, multiIntervalMode]));
+    compareIntervalMode.addEventListener("change", () => syncSelectGroup(compareIntervalMode, [intervalMode, multiIntervalMode]));
+    multiIntervalMode.addEventListener("change", () => syncSelectGroup(multiIntervalMode, [intervalMode, compareIntervalMode]));
+    timeFormat.addEventListener("change", () => syncSelectGroup(timeFormat, [compareTimeFormat, multiTimeFormat]));
     compareTimeFormat.addEventListener("change", () => {
-      syncSelect(compareTimeFormat, timeFormat);
+      syncSelectGroup(compareTimeFormat, [timeFormat, multiTimeFormat]);
       if (est.length) renderTable(est, intervalMode.value);
       if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+      if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
     });
-    timeZone.addEventListener("change", () => syncSelect(timeZone, compareTimeZone));
-    compareTimeZone.addEventListener("change", () => {
-      syncSelect(compareTimeZone, timeZone);
+    multiTimeFormat.addEventListener("change", () => {
+      syncSelectGroup(multiTimeFormat, [timeFormat, compareTimeFormat]);
       if (est.length) renderTable(est, intervalMode.value);
       if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+      if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
+    });
+    timeZone.addEventListener("change", () => syncSelectGroup(timeZone, [compareTimeZone, multiTimeZone]));
+    compareTimeZone.addEventListener("change", () => {
+      syncSelectGroup(compareTimeZone, [timeZone, multiTimeZone]);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+      if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
+    });
+    multiTimeZone.addEventListener("change", () => {
+      syncSelectGroup(multiTimeZone, [timeZone, compareTimeZone]);
+      if (est.length) renderTable(est, intervalMode.value);
+      if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+      if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
     });
 
     const compareAuditToggle = document.getElementById("compareAuditToggle");
     const compareRandomToggle = document.getElementById("compareRandomToggle");
+    const multiAuditToggle = document.getElementById("multiAuditToggle");
+    const multiRandomToggle = document.getElementById("multiRandomToggle");
     const syncAuditToggleText = () => {
       compareAuditToggle.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
+      multiAuditToggle.textContent = auditsEnabled ? "✅ Audits Enabled" : "🔍 Enable Audits";
     };
     const syncRandomToggleText = () => {
       compareRandomToggle.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
+      multiRandomToggle.textContent = randomizationEnabled ? "✅ Randomization Enabled" : "🎲 Enable Natural Randomization";
     };
     document.getElementById("auditToggle").addEventListener("click", () => syncAuditToggleText());
     document.getElementById("randomToggle").addEventListener("click", () => syncRandomToggleText());
@@ -716,14 +910,22 @@
       document.getElementById("randomToggle").click();
       syncRandomToggleText();
     });
+    multiAuditToggle.addEventListener("click", () => {
+      document.getElementById("auditToggle").click();
+      syncAuditToggleText();
+    });
+    multiRandomToggle.addEventListener("click", () => {
+      document.getElementById("randomToggle").click();
+      syncRandomToggleText();
+    });
 
     setEstStrength(estStrength);
     setAuditStrength(auditStrength.value);
     setAuditFreq(freqSlider.value);
     setRandStrength(randSlider.value);
-    syncSelect(intervalMode, compareIntervalMode);
-    syncSelect(timeFormat, compareTimeFormat);
-    syncSelect(timeZone, compareTimeZone);
+    syncSelectGroup(intervalMode, [compareIntervalMode, multiIntervalMode]);
+    syncSelectGroup(timeFormat, [compareTimeFormat, multiTimeFormat]);
+    syncSelectGroup(timeZone, [compareTimeZone, multiTimeZone]);
     syncAuditToggleText();
     syncRandomToggleText();
 
@@ -754,15 +956,15 @@
       }
       if (settings.intervalMode) {
         intervalMode.value = settings.intervalMode;
-        syncSelect(intervalMode, compareIntervalMode);
+        syncSelectGroup(intervalMode, [compareIntervalMode, multiIntervalMode]);
       }
       if (settings.timeFormat) {
         timeFormat.value = settings.timeFormat;
-        syncSelect(timeFormat, compareTimeFormat);
+        syncSelectGroup(timeFormat, [compareTimeFormat, multiTimeFormat]);
       }
       if (settings.timeZone) {
         timeZone.value = settings.timeZone;
-        syncSelect(timeZone, compareTimeZone);
+        syncSelectGroup(timeZone, [compareTimeZone, multiTimeZone]);
       }
       if (typeof settings.estStrength === "number") setEstStrength(settings.estStrength);
       if (settings.auditStrength) setAuditStrength(settings.auditStrength);
@@ -1144,6 +1346,120 @@
       document.getElementById("copyCompareGainsBHoriz").textContent = `📋 Copy ${nameB} Gains (Horizontal)`;
     }
 
+    function renderMultiCompare(channels, mode) {
+      const alignStart = (ts) => {
+        if (!isUtcDateOnlyMode(mode)) return ts;
+        return alignToUtcMidnight(ts);
+      };
+      const start = alignStart(Math.min(...channels.map(ch => ch.est[0].ts)));
+      const end = Math.max(...channels.map(ch => ch.est[ch.est.length - 1].ts));
+      const timeline = buildTimeline(start, end, mode);
+      const labels = timeline.map(ts => formatDate(ts, mode));
+      const txt = currentMode === "dark" ? "#fff" : "#000";
+
+      const seriesFrom = (data) => {
+        let idx = 0;
+        let last = null;
+        return timeline.map(t => {
+          while (idx < data.length && data[idx].ts <= t) {
+            last = data[idx].c;
+            idx++;
+          }
+          return last;
+        });
+      };
+
+      const series = channels.map((ch, i) => ({
+        ...ch,
+        color: multiColors[i % multiColors.length],
+        totals: seriesFrom(ch.est)
+      }));
+
+      series.forEach(ch => {
+        ch.gains = ch.totals.map((v, i) => {
+          if (i === 0 || v === null || ch.totals[i - 1] === null) return null;
+          return v - ch.totals[i - 1];
+        });
+      });
+
+      multiCompareChart?.destroy();
+      multiCompareChart = new Chart(document.getElementById("multiCompareChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: series.map(ch => ({
+            label: ch.name,
+            data: ch.totals,
+            borderColor: ch.color,
+            tension: 0.35,
+            pointRadius: 0,
+            spanGaps: true
+          }))
+        },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      const gainsTitle = document.getElementById("multiCompareGainsTitle");
+      const intervalName = { day: "Daily", week: "Weekly", month: "Monthly" }[mode] || "Daily";
+      const showIntervalGains = mode === "day" || mode === "week" || mode === "month";
+      if (gainsTitle) gainsTitle.textContent = `${showIntervalGains ? intervalName : "Daily"} Gains Comparison`;
+
+      const dailyGainKeys = Array.from(new Set(timeline.map(ts => new Date(ts).toISOString().slice(0, 10)))).sort();
+      const gainLabels = showIntervalGains ? labels.slice(1) : dailyGainKeys.map(d => formatDate(new Date(d).getTime(), "day"));
+      const gainDatasets = series.map(ch => {
+        let data;
+        if (showIntervalGains) {
+          data = ch.gains.slice(1);
+        } else {
+          const dailyMap = new Map();
+          timeline.forEach((ts, i) => {
+            const gain = ch.gains[i];
+            if (gain === null) return;
+            const dayKey = new Date(ts).toISOString().slice(0, 10);
+            dailyMap.set(dayKey, (dailyMap.get(dayKey) || 0) + gain);
+          });
+          data = dailyGainKeys.map(key => dailyMap.get(key) ?? null);
+        }
+        return {
+          label: `${ch.name} ${showIntervalGains ? intervalName : "Daily"} Gain`,
+          data,
+          borderColor: ch.color,
+          tension: 0.35,
+          pointRadius: 0,
+          spanGaps: true
+        };
+      });
+
+      multiCompareGainChart?.destroy();
+      multiCompareGainChart = new Chart(document.getElementById("multiCompareGainsChart"), {
+        type: "line",
+        data: { labels: gainLabels, datasets: gainDatasets },
+        options: { plugins: { legend: { labels: { color: txt } } }, scales: { x: { ticks: { color: txt } }, y: { ticks: { color: txt } } } }
+      });
+
+      const table = document.getElementById("multiCompareTable");
+      let h = "<thead><tr><th>Date/Time</th>";
+      series.forEach(ch => {
+        h += `<th>${ch.name} Subs</th><th>${ch.name} Gain</th>`;
+      });
+      h += "</tr></thead><tbody>";
+      labels.forEach((label, i) => {
+        h += `<tr><td>${label}</td>`;
+        series.forEach(ch => {
+          const sub = ch.totals[i];
+          const gain = ch.gains[i];
+          const cls = gain > 0 ? "text-emerald-300" : gain < 0 ? "text-red-400" : "text-white/60";
+          const showSub = sub === null ? "-" : sub.toLocaleString();
+          const showGain = gain === null ? "-" : `${gain > 0 ? "+" : gain < 0 ? "-" : ""}${Math.abs(gain).toLocaleString()}`;
+          h += `<td>${showSub}</td><td class="${cls}">${showGain}</td>`;
+        });
+        h += "</tr>";
+      });
+      table.innerHTML = h + "</tbody>";
+
+      multiCompareExport = { labels, series };
+    }
+
     /* === Copy + CSV === */
     const showToast = () => {
       const t = document.getElementById("toast");
@@ -1208,6 +1524,30 @@
       URL.revokeObjectURL(a.href);
     }
 
+    function downloadMultiCompareCSV() {
+      if (!multiCompareExport) return;
+      const { labels, series } = multiCompareExport;
+      const header = ["Date/Time"];
+      series.forEach(ch => {
+        header.push(`${ch.name} Subscribers`, `${ch.name} Gain`);
+      });
+      const rows = labels.map((label, i) => {
+        const row = [label];
+        series.forEach(ch => {
+          row.push(ch.totals[i] === null ? "" : ch.totals[i]);
+          row.push(ch.gains[i] === null ? "" : ch.gains[i]);
+        });
+        return row;
+      });
+      const csv = [header, ...rows].map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "multi-channel-comparison-estimates.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     /* === Mode Toggle === */
     document.getElementById("modeToggle").addEventListener("click", () => {
       document.body.classList.toggle("dark");
@@ -1215,13 +1555,18 @@
       currentMode = document.body.classList.contains("dark") ? "dark" : "light";
       if (est.length) renderCharts(est, lastMode);
       if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+      if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
     });
 
     /* === Main Execution === */
     document.addEventListener("DOMContentLoaded", () => {
       loadSettings();
+      createMultiChannelCard("Channel 1");
+      createMultiChannelCard("Channel 2");
       document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
       document.getElementById("saveSettingsCompareBtn").addEventListener("click", saveSettings);
+      document.getElementById("saveSettingsMultiBtn").addEventListener("click", saveSettings);
+      document.getElementById("addMultiChannelBtn").addEventListener("click", () => createMultiChannelCard());
       document.getElementById("estimateBtn").addEventListener("click", () => {
         const val = document.getElementById("dataInput").value;
         const mode = document.getElementById("intervalMode").value;
@@ -1274,8 +1619,34 @@
         } catch (e) { alert(e.message); }
       });
 
+      document.getElementById("multiCompareBtn").addEventListener("click", () => {
+        const mode = document.getElementById("multiIntervalMode").value;
+        const cards = Array.from(document.querySelectorAll(".multi-channel-card"));
+        const channels = [];
+        try {
+          cards.forEach((card, i) => {
+            const name = card.querySelector(".multi-channel-name").value.trim() || `Channel ${i + 1}`;
+            const raw = card.querySelector(".multi-channel-data").value;
+            if (!raw.trim()) return;
+            const points = parseInput(raw, mode);
+            if (points.length < 2) throw new Error(`${name} needs at least two points.`);
+            let estd = interpolate(points, mode);
+            if (auditsEnabled) estd = applyAudits(estd);
+            if (randomizationEnabled) estd = applyNaturalRandomization(estd, points);
+            channels.push({ name, est: estd });
+          });
+          if (channels.length < 2) return alert("Enter data for at least two channels.");
+          multiCompareState = { channels, mode };
+          renderMultiCompare(channels, mode);
+          document.getElementById("multiCompareResults").classList.remove("hidden");
+        } catch (e) { alert(e.message); }
+      });
+
       document.getElementById("compareDownloadBtn").addEventListener("click", () => {
         downloadCompareCSV();
+      });
+      document.getElementById("multiCompareDownloadBtn").addEventListener("click", () => {
+        downloadMultiCompareCSV();
       });
 
       document.getElementById("copyCompareGainsAVert").addEventListener("click", () => {
@@ -1334,10 +1705,10 @@
         document.getElementById(id).addEventListener("change", () => {
           if (est.length) renderTable(est, document.getElementById("intervalMode").value);
           if (compareState) renderCompare(compareState.estA, compareState.estB, compareState.mode, compareState.nameA, compareState.nameB);
+          if (multiCompareState) renderMultiCompare(multiCompareState.channels, multiCompareState.mode);
         })
       );
     });
   </script>
 </body>
 </html>
-
